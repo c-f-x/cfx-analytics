@@ -1,0 +1,30 @@
+{
+  "goal": "cfanalytics wave 3, close: an Opus close makes pnpm check pass on the landed fills (decision D-23)",
+  "source": "cfanalytics-w3-close",
+  "maxConcurrency": 1,
+  "nodes": [
+    {
+      "id": "w3.close",
+      "worker": {
+        "provider": "claude",
+        "model": "claude-opus-5-5"
+      },
+      "work": {
+        "prompt": "You close wave 3 of cfanalytics. DeepSeek workers filled the wave's files, each in its own worktree, and this worktree merges all their work. You make the whole tree pass, and you fix only what the merge and the whole-tree checks show.\n\n## Your environment\n- You are at the root of an isolated git worktree of cfanalytics, detached at the head of the branch build/w3, with the fills you depend on merged in. pleach runs you and checks your work with the gate named below.\n- Leave your work uncommitted. Do not create branches, commit or push. Never touch Cloudflare.\n- Delete with `trash`, never `rm`.\n- If a fault in the skeleton, a test or the specification stops you, write BLOCKED.md at the repository root: what is wrong, where, and what would fix it. Then stop.\n\n## Read first\n- CLAUDE.md, docs/engineering.md, docs/build-plan.md (step 4, \"Audit\") and docs/decisions.md D-17, D-22 and D-23.\n- docs/waves/w3/map.md.\n\n## What to do\n1. Trash apps/worker/src/platform/unbuilt.ts once nothing calls it (`trash`, never `rm`), and remove what only build branches need with it, such as `app.onError(surfaceUnbuilt)` in apps/worker/src/index.ts. If a body still calls unbuilt(), write BLOCKED.md naming it and stop: filling it is a worker's job.\n2. If the wave added or changed a schema step, run `npx -y pnpm@12.14.0 migrations:lock`. Run `npx -y pnpm@12.14.0 docs:gen`, and remove \" (planned)\" from every path in the docs that now exists.\n3. Run `npx -y pnpm@12.14.0 check` and fix what fails. A failure between two fills (an import, a type, a duplicated helper) is yours to fix in the smallest way. Look for logic two fills both wrote, and keep one home for it. Never weaken or delete a test. A test that is wrong is BLOCKED.md, not an edit.\n4. Fix every doc your changes make false, including the steps the map's \"Fill split\" section leaves to this node.\n\n## Your gate\n`npx -y pnpm@12.14.0 check` must exit 0. Run it yourself and read its exit code.\n\n## Your final message\nEvery change you made, file by file, and why. Name any file you deleted.\n"
+      },
+      "setup": "npx -y pnpm@12.14.0 install --frozen-lockfile --prefer-offline",
+      "needs": [],
+      "accept": {
+        "smoke": "npx -y pnpm@12.14.0 check",
+        "audit": {
+          "command": "node .context/pleach/audit-check.mjs",
+          "provider": "codex"
+        }
+      },
+      "policy": {
+        "maxAttempts": 1,
+        "timeoutMs": 3600000
+      }
+    }
+  ]
+}

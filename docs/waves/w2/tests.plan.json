@@ -1,0 +1,112 @@
+{
+  "goal": "cfanalytics wave 2, tests: an Opus outline of intake, cookieless, identity and events, then DeepSeek's failing tests for each slice (decision D-23)",
+  "source": "cfanalytics-w2-tests",
+  "maxConcurrency": 4,
+  "nodes": [
+    {
+      "id": "w2.outline",
+      "worker": {
+        "provider": "claude",
+        "model": "claude-opus-5-5"
+      },
+      "work": {
+        "prompt": "You are the outline author for wave 2 of cfanalytics, a PostHog-compatible analytics service on Cloudflare Workers. Wave 2 is the slices intake, cookieless, identity and events, which share one ProjectStore transaction. You write the wave's skeleton: every exported signature with its contract comment, bodies that call unbuilt(), the shared test helpers, and the wave map. You write no tests and fill no bodies: DeepSeek workers do that next, against your signatures, which are then frozen.\n\n## Your environment\n- You are at the root of an isolated git worktree of cfanalytics, detached at the head of the branch build/w2. pleach runs you and checks your work with the gate named below.\n- Leave your work uncommitted. Do not create branches, commit or push. Never touch Cloudflare.\n- Delete with `trash`, never `rm`.\n- If a fault in the skeleton or the specification stops you, write BLOCKED.md at the repository root: what is wrong, where, and what would fix it. Then stop.\n\n## Read first\n- CLAUDE.md, docs/architecture.md, docs/engineering.md, docs/data-model.md.\n- docs/decisions.md, above all D-17, D-20, D-21, D-22 and D-23.\n- docs/build-plan.md, docs/build-worker.md and docs/test-worker.md: the briefs the workers after you follow.\n- docs/spec/behaviours.md, the sections intake, cookieless, identity and events, and every section of docs/spec/posthog-protocol.md they cite.\n- The wave 1 code on this branch: apps/worker/src/platform/, apps/worker/src/features/projects/ and enrich/, packages/shared/src/, and their tests.\n\n## What to do\n1. Bring the wave's draft files from the branch build/skeleton: `git checkout build/skeleton -- <file>` for apps/worker/src/platform/unbuilt.ts, apps/worker/src/platform/ingest.ts and every file under apps/worker/src/features/intake/, cookieless/, identity/ and events/. Do not take build/skeleton's versions of files that exist on this branch: project-store.ts and index.ts are built here, so add to them by hand.\n2. Reconcile the drafts with this branch. Wave 1 is built and audited here, and some of its signatures changed after build/skeleton was written. The drafts must compile against what is here. Do not change wave 1's behaviour. Change a wave 1 export only when a wave 2 contract needs it, keep wave 1's tests green, and say so in your final message.\n3. Waves 3 and 4 (config, recordings, heatmaps, query, privacy) do not exist on this branch. No wave 2 file may import them. ingest.ts holds ingestBatch only, and IngestRequest has no heatmap points: wave 3 adds points and snapshots. A wave 2 behaviour that needs a wave 3 slice (for example intake-19 and $$heatmap events) is deferred: list it in the map with the reason.\n4. Apply D-22. ProjectStore gains one RPC call for this wave, `ingest`, returning `Promise<Result<IngestAnswer, SchemaError>>`. A store whose schema cannot serve answers the error and writes nothing. ProjectStore.ingest is filled in this wave too, so give it a marker body.\n5. Mount intake's capture routes in apps/worker/src/index.ts.\n6. Every exported function gets its signature and a comment saying what it must do and which behaviour IDs it serves. Its body calls `unbuilt(\"<slice>.<function>\")`. Pure files take time, random values and settings as arguments, return a Result and never throw. Follow docs/engineering.md; scripts/architecture.test.mjs enforces the layering, the cross-slice rule, module state and the orchestration rule. Write marker bodies that lint clean: a function returning void calls `unbuilt(...)` as a statement, not `return unbuilt(...)`.\n7. Check every kept behaviour line of the four slices against your signatures. Each must be testable through an exported signature, an HTTP request through SELF.fetch, or an RPC call. Where a behaviour cannot be reached, change the contract, not the behaviour. If a behaviour line itself is wrong, do not edit docs/spec/behaviours.md: list it in the map under \"Questions for the audit\".\n8. Write apps/worker/test/helpers/capture.ts in full, with no markers. It holds what the test workers of at least two slices need: building PostHog capture requests as posthog-js, posthog-node and posthog-ios send them (JSON, gzip and the base64 form body, per posthog-protocol.md), and reading a ProjectStore's rows through runInDurableObject. Reuse apps/worker/test/helpers/registry.ts and access.ts rather than repeating them. The test workers may not change the helpers, so make them complete and correct.\n9. Write docs/waves/w2/map.md:\n   - One table per test node: t-intake, t-cookieless, t-identity and t-events. Each row is a kept behaviour ID of that slice, the test file that proves it, and the functions or path under test. A test node owns only the test files under its slice's folder, so a behaviour proven end to end through a capture path still belongs to the slice of its ID. Name test files beside their source, as `<source>.test.ts`.\n   - Deferred behaviours, with the reason.\n   - The fill split you propose: which source files each fill worker owns, and which fill must land before another can pass its tests.\n   - Questions for the audit.\n10. Update the docs your change makes false. docs/architecture.md marks a path that does not exist yet with \" (planned)\", and `npx -y pnpm@12.14.0 docs:gen` rewrites the generated tables.\n\n## Your gate\n`npx -y pnpm@12.14.0 wave:gate outline apps/worker/src/platform/unbuilt.ts apps/worker/src/platform/ingest.ts apps/worker/src/platform/project-store.ts apps/worker/src/index.ts apps/worker/src/features/intake/clip.ts apps/worker/src/features/intake/core.ts apps/worker/src/features/intake/decode.ts apps/worker/src/features/intake/http.ts apps/worker/src/features/intake/index.ts apps/worker/src/features/intake/normalize.ts apps/worker/src/features/intake/time.ts apps/worker/src/features/intake/uuid.ts apps/worker/src/features/cookieless/core.ts apps/worker/src/features/cookieless/index.ts apps/worker/src/features/cookieless/store.ts apps/worker/src/features/identity/core.ts apps/worker/src/features/identity/index.ts apps/worker/src/features/identity/store.ts apps/worker/src/features/events/core.ts apps/worker/src/features/events/index.ts apps/worker/src/features/events/store.ts apps/worker/test/helpers/capture.ts docs/waves/w2/map.md`\nIt must exit 0. It runs lint, typecheck, every existing Worker test and the script checks, all but the one that wants no markers. Run it yourself and read its exit code.\n\n## Your final message\n- Every change you made to a wave 1 export, and why.\n- Every contract that differs from build/skeleton's draft, and why.\n- The deferred behaviours and the questions for the audit.\n"
+      },
+      "setup": "npx -y pnpm@12.14.0 install --frozen-lockfile --prefer-offline",
+      "accept": {
+        "smoke": "npx -y pnpm@12.14.0 wave:gate outline apps/worker/src/platform/unbuilt.ts apps/worker/src/platform/ingest.ts apps/worker/src/platform/project-store.ts apps/worker/src/index.ts apps/worker/src/features/intake/clip.ts apps/worker/src/features/intake/core.ts apps/worker/src/features/intake/decode.ts apps/worker/src/features/intake/http.ts apps/worker/src/features/intake/index.ts apps/worker/src/features/intake/normalize.ts apps/worker/src/features/intake/time.ts apps/worker/src/features/intake/uuid.ts apps/worker/src/features/cookieless/core.ts apps/worker/src/features/cookieless/index.ts apps/worker/src/features/cookieless/store.ts apps/worker/src/features/identity/core.ts apps/worker/src/features/identity/index.ts apps/worker/src/features/identity/store.ts apps/worker/src/features/events/core.ts apps/worker/src/features/events/index.ts apps/worker/src/features/events/store.ts apps/worker/test/helpers/capture.ts docs/waves/w2/map.md"
+      },
+      "policy": {
+        "maxAttempts": 1,
+        "timeoutMs": 5400000
+      }
+    },
+    {
+      "id": "w2.t-intake",
+      "worker": {
+        "provider": "deepseek"
+      },
+      "work": {
+        "prompt": "You are a test worker for wave 2 of cfanalytics. You write the failing tests of the intake slice, before anyone writes its code (decision D-21).\n\n## Your environment\n- You are at the root of an isolated git worktree of cfanalytics, detached at the head of the branch build/w2. pleach runs you and checks your work with the gate named below.\n- Leave your work uncommitted. Do not create branches, commit or push. Never touch Cloudflare.\n- Delete with `trash`, never `rm`.\n- If a fault in the skeleton or the specification stops you, write BLOCKED.md at the repository root: what is wrong, where, and what would fix it. Then stop.\n\n## Read first\n- docs/test-worker.md. It is your brief and it is binding, including its section \"When pleach runs you\".\n- docs/waves/w2/map.md, the table for t-intake: your behaviour IDs, your test files and the functions under test.\n- Each of those behaviour lines in docs/spec/behaviours.md, and the signatures and comments of the source files the map names.\n- The helpers in apps/worker/test/helpers/: capture.ts, registry.ts and access.ts. Use them. Do not change them and add no helper file.\n\n## What to do\nWrite the tests the map lists for t-intake, in the test files it names under apps/worker/src/features/intake/. Every behaviour in your table gets at least one test whose title starts with its ID. Change no file outside apps/worker/src/features/intake/*.test.ts. Skip a behaviour only when the brief allows it, and say why in your final message.\n\n## Your gate\n`npx -y pnpm@12.14.0 wave:gate red apps/worker/src/features/intake`\nIt must exit 0: only your test files changed, lint and typecheck pass, and every test names a kept behaviour and fails on an unbuilt marker. Run it yourself and read its exit code.\n\n## Your final message\nAs docs/test-worker.md says: each behaviour ID with its test titles, what you skipped and why, the gate's exit code, and anything in the signatures or the specification you think is wrong.\n"
+      },
+      "setup": "npx -y pnpm@12.14.0 install --frozen-lockfile --prefer-offline",
+      "needs": ["w2.outline"],
+      "accept": {
+        "smoke": "npx -y pnpm@12.14.0 wave:gate red apps/worker/src/features/intake"
+      },
+      "policy": {
+        "maxAttempts": 2,
+        "timeoutMs": 3600000
+      }
+    },
+    {
+      "id": "w2.t-cookieless",
+      "worker": {
+        "provider": "deepseek"
+      },
+      "work": {
+        "prompt": "You are a test worker for wave 2 of cfanalytics. You write the failing tests of the cookieless slice, before anyone writes its code (decision D-21).\n\n## Your environment\n- You are at the root of an isolated git worktree of cfanalytics, detached at the head of the branch build/w2. pleach runs you and checks your work with the gate named below.\n- Leave your work uncommitted. Do not create branches, commit or push. Never touch Cloudflare.\n- Delete with `trash`, never `rm`.\n- If a fault in the skeleton or the specification stops you, write BLOCKED.md at the repository root: what is wrong, where, and what would fix it. Then stop.\n\n## Read first\n- docs/test-worker.md. It is your brief and it is binding, including its section \"When pleach runs you\".\n- docs/waves/w2/map.md, the table for t-cookieless: your behaviour IDs, your test files and the functions under test.\n- Each of those behaviour lines in docs/spec/behaviours.md, and the signatures and comments of the source files the map names.\n- The helpers in apps/worker/test/helpers/: capture.ts, registry.ts and access.ts. Use them. Do not change them and add no helper file.\n\n## What to do\nWrite the tests the map lists for t-cookieless, in the test files it names under apps/worker/src/features/cookieless/. Every behaviour in your table gets at least one test whose title starts with its ID. Change no file outside apps/worker/src/features/cookieless/*.test.ts. Skip a behaviour only when the brief allows it, and say why in your final message.\n\n## Your gate\n`npx -y pnpm@12.14.0 wave:gate red apps/worker/src/features/cookieless`\nIt must exit 0: only your test files changed, lint and typecheck pass, and every test names a kept behaviour and fails on an unbuilt marker. Run it yourself and read its exit code.\n\n## Your final message\nAs docs/test-worker.md says: each behaviour ID with its test titles, what you skipped and why, the gate's exit code, and anything in the signatures or the specification you think is wrong.\n"
+      },
+      "setup": "npx -y pnpm@12.14.0 install --frozen-lockfile --prefer-offline",
+      "needs": ["w2.outline"],
+      "accept": {
+        "smoke": "npx -y pnpm@12.14.0 wave:gate red apps/worker/src/features/cookieless"
+      },
+      "policy": {
+        "maxAttempts": 2,
+        "timeoutMs": 3600000
+      }
+    },
+    {
+      "id": "w2.t-identity",
+      "worker": {
+        "provider": "deepseek"
+      },
+      "work": {
+        "prompt": "You are a test worker for wave 2 of cfanalytics. You write the failing tests of the identity slice, before anyone writes its code (decision D-21).\n\n## Your environment\n- You are at the root of an isolated git worktree of cfanalytics, detached at the head of the branch build/w2. pleach runs you and checks your work with the gate named below.\n- Leave your work uncommitted. Do not create branches, commit or push. Never touch Cloudflare.\n- Delete with `trash`, never `rm`.\n- If a fault in the skeleton or the specification stops you, write BLOCKED.md at the repository root: what is wrong, where, and what would fix it. Then stop.\n\n## Read first\n- docs/test-worker.md. It is your brief and it is binding, including its section \"When pleach runs you\".\n- docs/waves/w2/map.md, the table for t-identity: your behaviour IDs, your test files and the functions under test.\n- Each of those behaviour lines in docs/spec/behaviours.md, and the signatures and comments of the source files the map names.\n- The helpers in apps/worker/test/helpers/: capture.ts, registry.ts and access.ts. Use them. Do not change them and add no helper file.\n\n## What to do\nWrite the tests the map lists for t-identity, in the test files it names under apps/worker/src/features/identity/. Every behaviour in your table gets at least one test whose title starts with its ID. Change no file outside apps/worker/src/features/identity/*.test.ts. Skip a behaviour only when the brief allows it, and say why in your final message.\n\n## Your gate\n`npx -y pnpm@12.14.0 wave:gate red apps/worker/src/features/identity`\nIt must exit 0: only your test files changed, lint and typecheck pass, and every test names a kept behaviour and fails on an unbuilt marker. Run it yourself and read its exit code.\n\n## Your final message\nAs docs/test-worker.md says: each behaviour ID with its test titles, what you skipped and why, the gate's exit code, and anything in the signatures or the specification you think is wrong.\n"
+      },
+      "setup": "npx -y pnpm@12.14.0 install --frozen-lockfile --prefer-offline",
+      "needs": ["w2.outline"],
+      "accept": {
+        "smoke": "npx -y pnpm@12.14.0 wave:gate red apps/worker/src/features/identity"
+      },
+      "policy": {
+        "maxAttempts": 2,
+        "timeoutMs": 3600000
+      }
+    },
+    {
+      "id": "w2.t-events",
+      "worker": {
+        "provider": "deepseek"
+      },
+      "work": {
+        "prompt": "You are a test worker for wave 2 of cfanalytics. You write the failing tests of the events slice, before anyone writes its code (decision D-21).\n\n## Your environment\n- You are at the root of an isolated git worktree of cfanalytics, detached at the head of the branch build/w2. pleach runs you and checks your work with the gate named below.\n- Leave your work uncommitted. Do not create branches, commit or push. Never touch Cloudflare.\n- Delete with `trash`, never `rm`.\n- If a fault in the skeleton or the specification stops you, write BLOCKED.md at the repository root: what is wrong, where, and what would fix it. Then stop.\n\n## Read first\n- docs/test-worker.md. It is your brief and it is binding, including its section \"When pleach runs you\".\n- docs/waves/w2/map.md, the table for t-events: your behaviour IDs, your test files and the functions under test.\n- Each of those behaviour lines in docs/spec/behaviours.md, and the signatures and comments of the source files the map names.\n- The helpers in apps/worker/test/helpers/: capture.ts, registry.ts and access.ts. Use them. Do not change them and add no helper file.\n\n## What to do\nWrite the tests the map lists for t-events, in the test files it names under apps/worker/src/features/events/. Every behaviour in your table gets at least one test whose title starts with its ID. Change no file outside apps/worker/src/features/events/*.test.ts. Skip a behaviour only when the brief allows it, and say why in your final message.\n\n## Your gate\n`npx -y pnpm@12.14.0 wave:gate red apps/worker/src/features/events`\nIt must exit 0: only your test files changed, lint and typecheck pass, and every test names a kept behaviour and fails on an unbuilt marker. Run it yourself and read its exit code.\n\n## Your final message\nAs docs/test-worker.md says: each behaviour ID with its test titles, what you skipped and why, the gate's exit code, and anything in the signatures or the specification you think is wrong.\n"
+      },
+      "setup": "npx -y pnpm@12.14.0 install --frozen-lockfile --prefer-offline",
+      "needs": ["w2.outline"],
+      "accept": {
+        "smoke": "npx -y pnpm@12.14.0 wave:gate red apps/worker/src/features/events"
+      },
+      "policy": {
+        "maxAttempts": 2,
+        "timeoutMs": 3600000
+      }
+    },
+    {
+      "id": "w2.tests",
+      "work": {
+        "command": "git log -1 --format=%H"
+      },
+      "setup": "npx -y pnpm@12.14.0 install --frozen-lockfile --prefer-offline",
+      "needs": ["w2.t-intake", "w2.t-cookieless", "w2.t-identity", "w2.t-events"],
+      "accept": {
+        "smoke": "npx -y pnpm@12.14.0 wave:gate red apps/worker/src/features/intake apps/worker/src/features/cookieless apps/worker/src/features/identity apps/worker/src/features/events"
+      },
+      "policy": {
+        "maxAttempts": 1,
+        "timeoutMs": 1800000
+      }
+    }
+  ]
+}

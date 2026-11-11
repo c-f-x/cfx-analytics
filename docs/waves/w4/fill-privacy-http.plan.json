@@ -1,0 +1,25 @@
+{
+  "goal": "cfanalytics wave 4, the privacy routes' fill: its need, the sweep, was brought onto build/w4 by hand after its worker blocked on test faults (pleach #152)",
+  "source": "cfanalytics-w4-fill-privacy-http",
+  "maxConcurrency": 1,
+  "nodes": [
+    {
+      "id": "w4.f-privacy-http",
+      "worker": {
+        "provider": "deepseek"
+      },
+      "work": {
+        "prompt": "You are a build worker for wave 4 of cfanalytics. You fill in the bodies of your own files until their tests pass (decision D-17).\n\n## Your environment\n- You are at the root of an isolated git worktree of cfanalytics, detached at the head of the branch build/w4, with the fills you depend on merged in. pleach runs you and checks your work with the gate named below.\n- Leave your work uncommitted. Do not create branches, commit or push. Never touch Cloudflare.\n- Delete with `trash`, never `rm`.\n- If a fault in the skeleton, a test or the specification stops you, write BLOCKED.md at the repository root: what is wrong, where, and what would fix it. Then stop.\n\n## Read first\n- docs/build-worker.md. It is your brief and it is binding, including its section \"When pleach runs you\".\n- docs/waves/w4/map.md: the behaviours your files serve and the tests that prove them.\n- Your own files, their signatures and comments, and the tests named below.\n\n## What to do\nFill every body in your own files that calls `unbuilt(...)`, and remove the `unbuilt` import once nothing in a file uses it. Your own files: apps/worker/src/features/privacy/http.ts.\nChange nothing else: no signature, no test, no other file. The tests are the specification. If one looks wrong, write BLOCKED.md and stop.\n\n## Your gate\n`npx -y pnpm@12.14.0 wave:gate fill apps/worker/src/features/privacy/http.ts --tests apps/worker/src/features/privacy/http.test.ts`\nIt must exit 0: only your files changed, none still calls unbuilt(), lint and typecheck pass, and the tests pass. Run it yourself and read its exit code.\n\n## Your final message\nAs docs/build-worker.md says: what you built, file by file, the gate's exit code, anything you could not finish and why, and anything in the skeleton you think is wrong.\n"
+      },
+      "setup": "npx -y pnpm@12.14.0 install --frozen-lockfile --prefer-offline",
+      "needs": [],
+      "accept": {
+        "smoke": "npx -y pnpm@12.14.0 wave:gate fill apps/worker/src/features/privacy/http.ts --tests apps/worker/src/features/privacy/http.test.ts"
+      },
+      "policy": {
+        "maxAttempts": 2,
+        "timeoutMs": 3600000
+      }
+    }
+  ]
+}

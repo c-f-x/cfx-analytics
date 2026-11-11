@@ -1,0 +1,38 @@
+# Dependabot: version updates, once a week, minor and patch grouped.
+# The ecosystems here:
+#   - npm: the pnpm workspace at the root (every app and package)
+#   - github-actions: the workflow's action versions
+#   - swift: apps/compat/macos, which builds posthog-ios for the compatibility suite
+# posthog-js is left out: the Worker serves that version's own scripts, so a
+# bump is made with scripts/posthog-scripts.mjs, which replaces them together
+# (D-15, docs/operations.md).
+# A week's cooldown gives a bad release time to be pulled before it is proposed.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: posthog-js
+    groups:
+      npm-minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      actions-minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: swift
+    directory: /apps/compat/macos
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 2

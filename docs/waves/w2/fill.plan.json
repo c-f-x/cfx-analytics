@@ -1,0 +1,145 @@
+{
+  "goal": "cfanalytics wave 2, fill: DeepSeek fills the wave's bodies against its audited tests, then an Opus close makes pnpm check pass (decision D-23)",
+  "source": "cfanalytics-w2-fill",
+  "maxConcurrency": 4,
+  "nodes": [
+    {
+      "id": "w2.f-intake",
+      "worker": {
+        "provider": "deepseek"
+      },
+      "work": {
+        "prompt": "You are a build worker for wave 2 of cfanalytics. You fill in the bodies of your own files until their tests pass (decision D-17).\n\n## Your environment\n- You are at the root of an isolated git worktree of cfanalytics, detached at the head of the branch build/w2, with the fills you depend on merged in. pleach runs you and checks your work with the gate named below.\n- Leave your work uncommitted. Do not create branches, commit or push. Never touch Cloudflare.\n- Delete with `trash`, never `rm`.\n- If a fault in the skeleton, a test or the specification stops you, write BLOCKED.md at the repository root: what is wrong, where, and what would fix it. Then stop.\n\n## Read first\n- docs/build-worker.md. It is your brief and it is binding, including its section \"When pleach runs you\".\n- docs/waves/w2/map.md: the behaviours your files serve and the tests that prove them.\n- Your own files, their signatures and comments, and the tests named below.\n\n## What to do\nFill every body in your own files that calls `unbuilt(...)`, and remove the `unbuilt` import once nothing in a file uses it. Your own files: apps/worker/src/features/intake/clip.ts, apps/worker/src/features/intake/core.ts, apps/worker/src/features/intake/decode.ts, apps/worker/src/features/intake/normalize.ts, apps/worker/src/features/intake/time.ts, apps/worker/src/features/intake/uuid.ts.\nChange nothing else: no signature, no test, no other file. The tests are the specification. If one looks wrong, write BLOCKED.md and stop.\n\n## Your gate\n`npx -y pnpm@12.14.0 wave:gate fill apps/worker/src/features/intake/clip.ts apps/worker/src/features/intake/core.ts apps/worker/src/features/intake/decode.ts apps/worker/src/features/intake/normalize.ts apps/worker/src/features/intake/time.ts apps/worker/src/features/intake/uuid.ts --tests apps/worker/src/features/intake/clip.test.ts apps/worker/src/features/intake/core.test.ts apps/worker/src/features/intake/decode.test.ts apps/worker/src/features/intake/normalize.test.ts apps/worker/src/features/intake/time.test.ts apps/worker/src/features/intake/uuid.test.ts`\nIt must exit 0: only your files changed, none still calls unbuilt(), lint and typecheck pass, and the tests pass. Run it yourself and read its exit code.\n\n## Your final message\nAs docs/build-worker.md says: what you built, file by file, the gate's exit code, anything you could not finish and why, and anything in the skeleton you think is wrong.\n"
+      },
+      "setup": "npx -y pnpm@12.14.0 install --frozen-lockfile --prefer-offline",
+      "needs": [],
+      "accept": {
+        "smoke": "npx -y pnpm@12.14.0 wave:gate fill apps/worker/src/features/intake/clip.ts apps/worker/src/features/intake/core.ts apps/worker/src/features/intake/decode.ts apps/worker/src/features/intake/normalize.ts apps/worker/src/features/intake/time.ts apps/worker/src/features/intake/uuid.ts --tests apps/worker/src/features/intake/clip.test.ts apps/worker/src/features/intake/core.test.ts apps/worker/src/features/intake/decode.test.ts apps/worker/src/features/intake/normalize.test.ts apps/worker/src/features/intake/time.test.ts apps/worker/src/features/intake/uuid.test.ts"
+      },
+      "policy": {
+        "maxAttempts": 2,
+        "timeoutMs": 3600000
+      }
+    },
+    {
+      "id": "w2.f-cookieless",
+      "worker": {
+        "provider": "deepseek"
+      },
+      "work": {
+        "prompt": "You are a build worker for wave 2 of cfanalytics. You fill in the bodies of your own files until their tests pass (decision D-17).\n\n## Your environment\n- You are at the root of an isolated git worktree of cfanalytics, detached at the head of the branch build/w2, with the fills you depend on merged in. pleach runs you and checks your work with the gate named below.\n- Leave your work uncommitted. Do not create branches, commit or push. Never touch Cloudflare.\n- Delete with `trash`, never `rm`.\n- If a fault in the skeleton, a test or the specification stops you, write BLOCKED.md at the repository root: what is wrong, where, and what would fix it. Then stop.\n\n## Read first\n- docs/build-worker.md. It is your brief and it is binding, including its section \"When pleach runs you\".\n- docs/waves/w2/map.md: the behaviours your files serve and the tests that prove them.\n- Your own files, their signatures and comments, and the tests named below.\n\n## What to do\nFill every body in your own files that calls `unbuilt(...)`, and remove the `unbuilt` import once nothing in a file uses it. Your own files: apps/worker/src/features/cookieless/core.ts, apps/worker/src/features/cookieless/store.ts.\nChange nothing else: no signature, no test, no other file. The tests are the specification. If one looks wrong, write BLOCKED.md and stop.\n\n## Your gate\n`npx -y pnpm@12.14.0 wave:gate fill apps/worker/src/features/cookieless/core.ts apps/worker/src/features/cookieless/store.ts --tests apps/worker/src/features/cookieless/core.test.ts apps/worker/src/features/cookieless/store.test.ts`\nIt must exit 0: only your files changed, none still calls unbuilt(), lint and typecheck pass, and the tests pass. Run it yourself and read its exit code.\n\n## Your final message\nAs docs/build-worker.md says: what you built, file by file, the gate's exit code, anything you could not finish and why, and anything in the skeleton you think is wrong.\n"
+      },
+      "setup": "npx -y pnpm@12.14.0 install --frozen-lockfile --prefer-offline",
+      "needs": [],
+      "accept": {
+        "smoke": "npx -y pnpm@12.14.0 wave:gate fill apps/worker/src/features/cookieless/core.ts apps/worker/src/features/cookieless/store.ts --tests apps/worker/src/features/cookieless/core.test.ts apps/worker/src/features/cookieless/store.test.ts"
+      },
+      "policy": {
+        "maxAttempts": 2,
+        "timeoutMs": 3600000
+      }
+    },
+    {
+      "id": "w2.f-identity",
+      "worker": {
+        "provider": "deepseek"
+      },
+      "work": {
+        "prompt": "You are a build worker for wave 2 of cfanalytics. You fill in the bodies of your own files until their tests pass (decision D-17).\n\n## Your environment\n- You are at the root of an isolated git worktree of cfanalytics, detached at the head of the branch build/w2, with the fills you depend on merged in. pleach runs you and checks your work with the gate named below.\n- Leave your work uncommitted. Do not create branches, commit or push. Never touch Cloudflare.\n- Delete with `trash`, never `rm`.\n- If a fault in the skeleton, a test or the specification stops you, write BLOCKED.md at the repository root: what is wrong, where, and what would fix it. Then stop.\n\n## Read first\n- docs/build-worker.md. It is your brief and it is binding, including its section \"When pleach runs you\".\n- docs/waves/w2/map.md: the behaviours your files serve and the tests that prove them.\n- Your own files, their signatures and comments, and the tests named below.\n\n## What to do\nFill every body in your own files that calls `unbuilt(...)`, and remove the `unbuilt` import once nothing in a file uses it. Your own files: apps/worker/src/features/identity/core.ts, apps/worker/src/features/identity/store.ts.\nChange nothing else: no signature, no test, no other file. The tests are the specification. If one looks wrong, write BLOCKED.md and stop.\n\n## Your gate\n`npx -y pnpm@12.14.0 wave:gate fill apps/worker/src/features/identity/core.ts apps/worker/src/features/identity/store.ts --tests apps/worker/src/features/identity/core.test.ts apps/worker/src/features/identity/store.test.ts`\nIt must exit 0: only your files changed, none still calls unbuilt(), lint and typecheck pass, and the tests pass. Run it yourself and read its exit code.\n\n## Your final message\nAs docs/build-worker.md says: what you built, file by file, the gate's exit code, anything you could not finish and why, and anything in the skeleton you think is wrong.\n"
+      },
+      "setup": "npx -y pnpm@12.14.0 install --frozen-lockfile --prefer-offline",
+      "needs": [],
+      "accept": {
+        "smoke": "npx -y pnpm@12.14.0 wave:gate fill apps/worker/src/features/identity/core.ts apps/worker/src/features/identity/store.ts --tests apps/worker/src/features/identity/core.test.ts apps/worker/src/features/identity/store.test.ts"
+      },
+      "policy": {
+        "maxAttempts": 2,
+        "timeoutMs": 3600000
+      }
+    },
+    {
+      "id": "w2.f-events",
+      "worker": {
+        "provider": "deepseek"
+      },
+      "work": {
+        "prompt": "You are a build worker for wave 2 of cfanalytics. You fill in the bodies of your own files until their tests pass (decision D-17).\n\n## Your environment\n- You are at the root of an isolated git worktree of cfanalytics, detached at the head of the branch build/w2, with the fills you depend on merged in. pleach runs you and checks your work with the gate named below.\n- Leave your work uncommitted. Do not create branches, commit or push. Never touch Cloudflare.\n- Delete with `trash`, never `rm`.\n- If a fault in the skeleton, a test or the specification stops you, write BLOCKED.md at the repository root: what is wrong, where, and what would fix it. Then stop.\n\n## Read first\n- docs/build-worker.md. It is your brief and it is binding, including its section \"When pleach runs you\".\n- docs/waves/w2/map.md: the behaviours your files serve and the tests that prove them.\n- Your own files, their signatures and comments, and the tests named below.\n\n## What to do\nFill every body in your own files that calls `unbuilt(...)`, and remove the `unbuilt` import once nothing in a file uses it. Your own files: apps/worker/src/features/events/core.ts, apps/worker/src/features/events/store.ts.\nChange nothing else: no signature, no test, no other file. The tests are the specification. If one looks wrong, write BLOCKED.md and stop.\n\n## Your gate\n`npx -y pnpm@12.14.0 wave:gate fill apps/worker/src/features/events/core.ts apps/worker/src/features/events/store.ts --tests apps/worker/src/features/events/core.test.ts apps/worker/src/features/events/store.test.ts`\nIt must exit 0: only your files changed, none still calls unbuilt(), lint and typecheck pass, and the tests pass. Run it yourself and read its exit code.\n\n## Your final message\nAs docs/build-worker.md says: what you built, file by file, the gate's exit code, anything you could not finish and why, and anything in the skeleton you think is wrong.\n"
+      },
+      "setup": "npx -y pnpm@12.14.0 install --frozen-lockfile --prefer-offline",
+      "needs": [],
+      "accept": {
+        "smoke": "npx -y pnpm@12.14.0 wave:gate fill apps/worker/src/features/events/core.ts apps/worker/src/features/events/store.ts --tests apps/worker/src/features/events/core.test.ts apps/worker/src/features/events/store.test.ts"
+      },
+      "policy": {
+        "maxAttempts": 2,
+        "timeoutMs": 3600000
+      }
+    },
+    {
+      "id": "w2.f-ingest",
+      "worker": {
+        "provider": "deepseek"
+      },
+      "work": {
+        "prompt": "You are a build worker for wave 2 of cfanalytics. You fill in the bodies of your own files until their tests pass (decision D-17).\n\n## Your environment\n- You are at the root of an isolated git worktree of cfanalytics, detached at the head of the branch build/w2, with the fills you depend on merged in. pleach runs you and checks your work with the gate named below.\n- Leave your work uncommitted. Do not create branches, commit or push. Never touch Cloudflare.\n- Delete with `trash`, never `rm`.\n- If a fault in the skeleton, a test or the specification stops you, write BLOCKED.md at the repository root: what is wrong, where, and what would fix it. Then stop.\n\n## Read first\n- docs/build-worker.md. It is your brief and it is binding, including its section \"When pleach runs you\".\n- docs/waves/w2/map.md: the behaviours your files serve and the tests that prove them.\n- Your own files, their signatures and comments, and the tests named below.\n\n## What to do\nFill every body in your own files that calls `unbuilt(...)`, and remove the `unbuilt` import once nothing in a file uses it. Your own files: apps/worker/src/platform/ingest.ts, apps/worker/src/platform/project-store.ts.\nChange nothing else: no signature, no test, no other file. The tests are the specification. If one looks wrong, write BLOCKED.md and stop.\n\n## Your gate\n`npx -y pnpm@12.14.0 wave:gate fill apps/worker/src/platform/ingest.ts apps/worker/src/platform/project-store.ts --tests apps/worker/src/features/cookieless/ingest.test.ts apps/worker/src/features/identity/ingest.test.ts apps/worker/src/features/events/ingest.test.ts`\nIt must exit 0: only your files changed, none still calls unbuilt(), lint and typecheck pass, and the tests pass. Run it yourself and read its exit code.\n\n## Your final message\nAs docs/build-worker.md says: what you built, file by file, the gate's exit code, anything you could not finish and why, and anything in the skeleton you think is wrong.\n"
+      },
+      "setup": "npx -y pnpm@12.14.0 install --frozen-lockfile --prefer-offline",
+      "needs": ["w2.f-intake", "w2.f-cookieless", "w2.f-identity", "w2.f-events"],
+      "accept": {
+        "smoke": "npx -y pnpm@12.14.0 wave:gate fill apps/worker/src/platform/ingest.ts apps/worker/src/platform/project-store.ts --tests apps/worker/src/features/cookieless/ingest.test.ts apps/worker/src/features/identity/ingest.test.ts apps/worker/src/features/events/ingest.test.ts"
+      },
+      "policy": {
+        "maxAttempts": 2,
+        "timeoutMs": 3600000
+      }
+    },
+    {
+      "id": "w2.f-capture",
+      "worker": {
+        "provider": "deepseek"
+      },
+      "work": {
+        "prompt": "You are a build worker for wave 2 of cfanalytics. You fill in the bodies of your own files until their tests pass (decision D-17).\n\n## Your environment\n- You are at the root of an isolated git worktree of cfanalytics, detached at the head of the branch build/w2, with the fills you depend on merged in. pleach runs you and checks your work with the gate named below.\n- Leave your work uncommitted. Do not create branches, commit or push. Never touch Cloudflare.\n- Delete with `trash`, never `rm`.\n- If a fault in the skeleton, a test or the specification stops you, write BLOCKED.md at the repository root: what is wrong, where, and what would fix it. Then stop.\n\n## Read first\n- docs/build-worker.md. It is your brief and it is binding, including its section \"When pleach runs you\".\n- docs/waves/w2/map.md: the behaviours your files serve and the tests that prove them.\n- Your own files, their signatures and comments, and the tests named below.\n\n## What to do\nFill every body in your own files that calls `unbuilt(...)`, and remove the `unbuilt` import once nothing in a file uses it. Your own files: apps/worker/src/features/intake/http.ts.\nChange nothing else: no signature, no test, no other file. The tests are the specification. If one looks wrong, write BLOCKED.md and stop.\n\n## Your gate\n`npx -y pnpm@12.14.0 wave:gate fill apps/worker/src/features/intake/http.ts --tests apps/worker/src/features/intake/http.test.ts apps/worker/src/features/cookieless/capture.test.ts apps/worker/src/features/identity/capture.test.ts apps/worker/src/features/events/capture.test.ts`\nIt must exit 0: only your files changed, none still calls unbuilt(), lint and typecheck pass, and the tests pass. Run it yourself and read its exit code.\n\n## Your final message\nAs docs/build-worker.md says: what you built, file by file, the gate's exit code, anything you could not finish and why, and anything in the skeleton you think is wrong.\n"
+      },
+      "setup": "npx -y pnpm@12.14.0 install --frozen-lockfile --prefer-offline",
+      "needs": ["w2.f-intake", "w2.f-ingest"],
+      "accept": {
+        "smoke": "npx -y pnpm@12.14.0 wave:gate fill apps/worker/src/features/intake/http.ts --tests apps/worker/src/features/intake/http.test.ts apps/worker/src/features/cookieless/capture.test.ts apps/worker/src/features/identity/capture.test.ts apps/worker/src/features/events/capture.test.ts"
+      },
+      "policy": {
+        "maxAttempts": 2,
+        "timeoutMs": 3600000
+      }
+    },
+    {
+      "id": "w2.close",
+      "worker": {
+        "provider": "claude",
+        "model": "claude-opus-5-5"
+      },
+      "work": {
+        "prompt": "You close wave 2 of cfanalytics. DeepSeek workers filled the wave's files, each in its own worktree, and this worktree merges all their work. You make the whole tree pass, and you fix only what the merge and the whole-tree checks show.\n\n## Your environment\n- You are at the root of an isolated git worktree of cfanalytics, detached at the head of the branch build/w2, with the fills you depend on merged in. pleach runs you and checks your work with the gate named below.\n- Leave your work uncommitted. Do not create branches, commit or push. Never touch Cloudflare.\n- Delete with `trash`, never `rm`.\n- If a fault in the skeleton, a test or the specification stops you, write BLOCKED.md at the repository root: what is wrong, where, and what would fix it. Then stop.\n\n## Read first\n- CLAUDE.md, docs/engineering.md, docs/build-plan.md (step 4, \"Audit\") and docs/decisions.md D-17, D-22 and D-23.\n- docs/waves/w2/map.md.\n\n## What to do\n1. Trash apps/worker/src/platform/unbuilt.ts once nothing calls it (`trash`, never `rm`), and remove what only build branches need with it, such as `app.onError(surfaceUnbuilt)` in apps/worker/src/index.ts. If a body still calls unbuilt(), write BLOCKED.md naming it and stop: filling it is a worker's job.\n2. If the wave added or changed a schema step, run `npx -y pnpm@12.14.0 migrations:lock`. Run `npx -y pnpm@12.14.0 docs:gen`, and remove \" (planned)\" from every path in the docs that now exists.\n3. Run `npx -y pnpm@12.14.0 check` and fix what fails. A failure between two fills (an import, a type, a duplicated helper) is yours to fix in the smallest way. Look for logic two fills both wrote, and keep one home for it. Never weaken or delete a test. A test that is wrong is BLOCKED.md, not an edit.\n4. Fix every doc your changes make false, including the steps the map's \"Fill split\" section leaves to this node.\n\n## Your gate\n`npx -y pnpm@12.14.0 check` must exit 0. Run it yourself and read its exit code.\n\n## Your final message\nEvery change you made, file by file, and why. Name any file you deleted.\n"
+      },
+      "setup": "npx -y pnpm@12.14.0 install --frozen-lockfile --prefer-offline",
+      "needs": [
+        "w2.f-intake",
+        "w2.f-cookieless",
+        "w2.f-identity",
+        "w2.f-events",
+        "w2.f-ingest",
+        "w2.f-capture"
+      ],
+      "accept": {
+        "smoke": "npx -y pnpm@12.14.0 check",
+        "audit": {
+          "command": "node .context/pleach/audit-check.mjs",
+          "provider": "codex"
+        }
+      },
+      "policy": {
+        "maxAttempts": 1,
+        "timeoutMs": 3600000
+      }
+    }
+  ]
+}

@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>cfanalytics · Board (mockup)</title>
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+<style>
+  /* Tokens from cfmail (apps/web/src/styles/globals.css): near-neutral oklch greys and one teal accent. */
+  :root {
+    --bg: oklch(0.985 0 0);
+    --fg: oklch(0.18 0 0);
+    --muted: oklch(0.965 0 0);
+    --muted-fg: oklch(0.45 0 0);
+    --border: oklch(0.905 0 0);
+    --card: oklch(1 0 0);
+    --primary: oklch(0.48 0.08 204);
+    --primary-fg: oklch(1 0 0);
+    --primary-soft: oklch(0.95 0.02 204);
+    --ring: oklch(0.5 0.06 204);
+    --sidebar: oklch(0.975 0 0);
+    --sidebar-accent: oklch(0.93 0 0);
+    --bar: oklch(0.955 0 0);
+    --success: oklch(0.52 0.13 150);
+    --radius: 6px;
+    --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: "Inter var", "Inter", ui-sans-serif, system-ui, sans-serif;
+    font-feature-settings: "cv11", "ss01", "ss03", "tnum";
+    letter-spacing: -0.005em;
+    font-size: 13px; line-height: 20px;
+    color: var(--fg); background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:focus-visible, a:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+  .app { display: grid; grid-template-columns: 232px 1fr; height: 100vh; }
+
+  /* Rail, after cfmail's rail.tsx */
+  .rail { background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: var(--space-3); gap: var(--space-4); }
+  .switcher { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2); border: 0; background: transparent; border-radius: var(--radius); text-align: left; width: 100%; }
+  .switcher:hover { background: var(--sidebar-accent); }
+  .tile-mark { width: 28px; height: 28px; border-radius: var(--radius); background: var(--primary); color: var(--primary-fg); display: grid; place-items: center; font-weight: 600; font-size: 13px; flex: none; }
+  .switcher .name { font-weight: 600; font-size: 14px; }
+  .switcher .sub { color: var(--muted-fg); font-size: 12px; line-height: 16px; }
+  .switcher .chev { margin-left: auto; color: var(--muted-fg); }
+  nav { display: flex; flex-direction: column; gap: 2px; }
+  nav a { display: flex; align-items: center; gap: var(--space-3); padding: 6px var(--space-2); border-radius: var(--radius); color: var(--fg); text-decoration: none; font-weight: 500; }
+  nav a:hover { background: var(--sidebar-accent); }
+  nav a.current { background: var(--sidebar-accent); font-weight: 600; }
+  nav svg { width: 16px; height: 16px; color: var(--muted-fg); flex: none; }
+  nav a.current svg { color: var(--fg); }
+  .rail .foot { margin-top: auto; }
+
+  /* Main */
+  main { overflow: auto; }
+  .bar { position: sticky; top: 0; z-index: 2; background: color-mix(in oklch, var(--bg) 92%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid var(--border); }
+  .bar-inner { display: flex; align-items: center; gap: var(--space-2); height: 56px; padding: 0 var(--space-6); max-width: 1180px; }
+  h1 { font-size: 18px; line-height: 24px; font-weight: 600; margin: 0 auto 0 0; letter-spacing: -0.01em; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 var(--space-3); border-radius: var(--radius); border: 1px solid var(--border); background: var(--card); font-weight: 500; }
+  .btn:hover { background: var(--muted); }
+  .btn svg { width: 15px; height: 15px; color: var(--muted-fg); }
+  .btn.primary { background: var(--primary); border-color: var(--primary); color: var(--primary-fg); }
+  .btn.primary svg { color: var(--primary-fg); }
+  .btn.primary:hover { background: oklch(0.43 0.08 204); }
+  .btn.toggle[aria-pressed="true"] { background: var(--muted); border-color: oklch(0.75 0 0); }
+  .btn.toggle[aria-pressed="true"] svg { color: var(--fg); }
+
+  .content { padding: var(--space-5) var(--space-6) var(--space-6); max-width: 1180px; display: flex; flex-direction: column; gap: var(--space-4); }
+  .notice { display: flex; align-items: center; gap: var(--space-2); color: var(--muted-fg); }
+  .notice a { color: var(--primary); font-weight: 500; text-decoration: none; }
+  .notice a:hover { text-decoration: underline; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: calc(var(--radius) + 2px); }
+  .card-head { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4) 0; height: 44px; }
+  .card-head h2 { font-size: 13px; font-weight: 600; margin: 0 auto 0 0; }
+  .menu { width: 28px; height: 28px; border: 0; background: transparent; border-radius: var(--radius); color: var(--muted-fg); display: grid; place-items: center; }
+  .menu:hover { background: var(--muted); color: var(--fg); }
+  .seg { display: inline-flex; background: var(--muted); border-radius: var(--radius); padding: 2px; }
+  .seg button { border: 0; background: transparent; height: 24px; padding: 0 var(--space-2); border-radius: 4px; color: var(--muted-fg); font-weight: 500; font-size: 12px; }
+  .seg button[aria-selected="true"] { background: var(--card); color: var(--fg); box-shadow: 0 1px 2px oklch(0 0 0 / 0.08); }
+
+  /* The headline tile */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--border); }
+  .stat { padding: var(--space-4) var(--space-5); border-right: 1px solid var(--border); }
+  .stat:last-child { border-right: 0; }
+  .stat.current { box-shadow: inset 0 -2px 0 var(--primary); }
+  .stat .label { color: var(--muted-fg); font-weight: 500; }
+  .stat .value { font-size: 28px; line-height: 36px; font-weight: 600; letter-spacing: -0.02em; margin-top: 2px; }
+  .stat .change { font-weight: 500; color: var(--success); margin-left: var(--space-2); font-size: 13px; letter-spacing: 0; }
+  .chart { padding: var(--space-4) var(--space-5) var(--space-3); }
+  .legend { display: flex; gap: var(--space-4); color: var(--muted-fg); font-size: 12px; margin-bottom: var(--space-2); }
+  .legend span::before { content: ""; display: inline-block; width: 12px; height: 2px; vertical-align: middle; margin-right: 6px; background: var(--primary); }
+  .legend span.prev::before { background: oklch(0.7 0 0); }
+
+  /* Ranked lists */
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-weight: 500; color: var(--muted-fg); font-size: 12px; padding: var(--space-2) var(--space-4); }
+  th.num, td.num { text-align: right; width: 88px; font-variant-numeric: tabular-nums; }
+  td { padding: 0 var(--space-4); height: 32px; }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover td { background: var(--muted); }
+  .rowbar { position: relative; }
+  .rowbar > i { position: absolute; inset: 5px auto 5px 8px; background: var(--bar); border-radius: 4px; z-index: 0; }
+  .rowbar > span { position: relative; z-index: 1; padding-left: 6px; }
+  tbody tr:hover .rowbar > i { background: oklch(0.92 0 0); }
+  .card-foot { padding: var(--space-2) var(--space-4) var(--space-3); }
+  .card-foot a { color: var(--muted-fg); text-decoration: none; font-weight: 500; font-size: 12px; }
+  .card-foot a:hover { color: var(--fg); }
+
+  /* Funnel */
+  .tag { font-size: 11px; font-weight: 500; color: var(--muted-fg); border: 1px solid var(--border); border-radius: 999px; padding: 0 var(--space-2); line-height: 18px; }
+  .funnel { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-5); padding: var(--space-4) var(--space-5) var(--space-5); align-items: end; }
+  .step .col { height: 120px; display: flex; align-items: flex-end; background: var(--muted); border-radius: 4px; }
+  .step .fill { width: 100%; background: oklch(0.82 0 0); border-radius: 4px; }
+  .step .name { font-weight: 600; margin-top: var(--space-2); }
+  .step .nums { color: var(--muted-fg); }
+  .step .nums b { color: var(--fg); font-weight: 600; }
+  .note { position: fixed; right: 16px; bottom: 16px; background: var(--fg); color: var(--bg); padding: 6px 10px; border-radius: var(--radius); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="rail">
+    <button class="switcher" aria-label="Switch product">
+      <span class="tile-mark">S</span>
+      <span><div class="name">example.com</div><div class="sub">Europe/Oslo</div></span>
+      <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+    </button>
+    <nav aria-label="Product">
+      <a class="current" href="#" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Board</a>
+      <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Pages</a>
+      <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4z"/></svg>Recordings</a>
+      <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Events</a>
+    </nav>
+    <nav class="foot" aria-label="Product settings">
+      <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</a>
+    </nav>
+  </aside>
+
+  <main>
+    <div class="bar"><div class="bar-inner">
+      <h1>Board</h1>
+      <button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Last 7 days<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
+      <button class="btn toggle" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m7 14 4-4 4 4 5-5"/></svg>Compare</button>
+      <button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54z"/></svg>Filter</button>
+      <button class="btn primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>Add question</button>
+    </div></div>
+
+    <div class="content">
+      <div class="notice">Bots and your own traffic are left out. <a href="#">Include</a></div>
+
+      <section class="card" aria-label="Visitors, page views and sessions">
+        <div class="stats">
+          <div class="stat current"><div class="label">Visitors</div><div class="value">1,204<span class="change">+12%</span></div></div>
+          <div class="stat"><div class="label">Page views</div><div class="value">3,880<span class="change">+4%</span></div></div>
+          <div class="stat"><div class="label">Sessions</div><div class="value">1,610<span class="change">+9%</span></div></div>
+        </div>
+        <div class="chart">
+          <div class="legend"><span>15 to 21 Oct</span><span class="prev">8 to 14 Oct</span></div>
+          <svg viewBox="0 0 1000 200" width="100%" height="200" role="img" aria-label="Visitors per day, this week and last">
+            <g stroke="oklch(0.93 0 0)" stroke-width="1">
+              <line x1="40" y1="20" x2="1000" y2="20"/><line x1="40" y1="80" x2="1000" y2="80"/><line x1="40" y1="140" x2="1000" y2="140"/><line x1="40" y1="170" x2="1000" y2="170"/>
+            </g>
+            <g fill="oklch(0.55 0 0)" font-size="11" font-family="inherit">
+              <text x="0" y="24">250</text><text x="0" y="84">150</text><text x="0" y="144">50</text><text x="0" y="174">0</text>
+              <text x="60" y="194">Thu</text><text x="203" y="194">Fri</text><text x="346" y="194">Sat</text><text x="489" y="194">Sun</text><text x="632" y="194">Mon</text><text x="775" y="194">Tue</text><text x="918" y="194">Wed</text>
+            </g>
+            <!-- y = 170 - v * 0.6; last week 130,150,140,160,170,165,160 -->
+            <polyline fill="none" stroke="oklch(0.7 0 0)" stroke-width="2" stroke-dasharray="5 5" points="75,92.0 218,80.0 361,86.0 504,74.0 647,68.0 790,71.0 933,74.0"/>
+            <!-- this week 142,168,155,190,201,176,172 -->
+            <polyline fill="none" stroke="oklch(0.48 0.08 204)" stroke-width="2.5" stroke-linejoin="round" points="75,84.8 218,69.2 361,77.0 504,56.0 647,49.4 790,64.4 933,66.8"/>
+            <g fill="oklch(0.48 0.08 204)"><circle cx="75" cy="84.8" r="3"/><circle cx="218" cy="69.2" r="3"/><circle cx="361" cy="77.0" r="3"/><circle cx="504" cy="56.0" r="3"/><circle cx="647" cy="49.4" r="3"/><circle cx="790" cy="64.4" r="3"/><circle cx="933" cy="66.8" r="3"/></g>
+          </svg>
+        </div>
+      </section>
+
+      <div class="grid">
+        <section class="card">
+          <div class="card-head"><h2>Pages</h2><button class="menu" aria-label="Tile menu">⋯</button></div>
+          <table>
+            <thead><tr><th>Page</th><th class="num">Visitors</th></tr></thead>
+            <tbody>
+              <tr><td class="rowbar"><i style="width:calc((100% - 16px) * 1.00)"></i><span>/</span></td><td class="num">812</td></tr>
+              <tr><td class="rowbar"><i style="width:calc((100% - 16px) * 0.29)"></i><span>/pricing</span></td><td class="num">233</td></tr>
+              <tr><td class="rowbar"><i style="width:calc((100% - 16px) * 0.23)"></i><span>/demo</span></td><td class="num">190</td></tr>
+              <tr><td class="rowbar"><i style="width:calc((100% - 16px) * 0.13)"></i><span>/blog/why-local</span></td><td class="num">104</td></tr>
+              <tr><td class="rowbar"><i style="width:calc((100% - 16px) * 0.11)"></i><span>/download</span></td><td class="num">88</td></tr>
+            </tbody>
+          </table>
+          <div class="card-foot"><a href="#">All pages →</a></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><h2>Sources</h2><div class="seg" role="tablist"><button role="tab" aria-selected="true">Channels</button><button role="tab">Sites</button></div><button class="menu" aria-label="Tile menu">⋯</button></div>
+          <table>
+            <thead><tr><th>Channel</th><th class="num">Visitors</th></tr></thead>
+            <tbody>
+              <tr><td class="rowbar"><i style="width:calc((100% - 16px) * 1.00)"></i><span>Search</span></td><td class="num">431</td></tr>
+              <tr><td class="rowbar"><i style="width:calc((100% - 16px) * 0.93)"></i><span>Direct</span></td><td class="num">402</td></tr>
+              <tr><td class="rowbar"><i style="width:calc((100% - 16px) * 0.39)"></i><span>Social</span></td><td class="num">168</td></tr>
+              <tr><td class="rowbar"><i style="width:calc((100% - 16px) * 0.28)"></i><span>Other sites</span></td><td class="num">121</td></tr>
+              <tr><td class="rowbar"><i style="width:calc((100% - 16px) * 0.12)"></i><span>Email</span></td><td class="num">52</td></tr>
+            </tbody>
+          </table>
+          <div class="card-foot"><a href="#">All sources →</a></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><h2>Countries</h2><button class="menu" aria-label="Tile menu">⋯</button></div>
+          <table>
+            <thead><tr><th>Country</th><th class="num">Visitors</th></tr></thead>
+            <tbody>
+              <tr><td class="rowbar"><i style="width:calc((100% - 16px) * 1.00)"></i><span>Norway</span></td><td class="num">388</td></tr>
+              <tr><td class="rowbar"><i style="width:calc((100% - 16px) * 0.62)"></i><span>United States</span></td><td class="num">241</td></tr>
+              <tr><td class="rowbar"><i style="width:calc((100% - 16px) * 0.40)"></i><span>Germany</span></td><td class="num">156</td></tr>
+              <tr><td class="rowbar"><i style="width:calc((100% - 16px) * 0.34)"></i><span>United Kingdom</span></td><td class="num">132</td></tr>
+              <tr><td class="rowbar"><i style="width:calc((100% - 16px) * 0.25)"></i><span>Sweden</span></td><td class="num">97</td></tr>
+            </tbody>
+          </table>
+          <div class="card-foot"><a href="#">All countries →</a></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><h2>Devices</h2><div class="seg" role="tablist"><button role="tab" aria-selected="true">Type</button><button role="tab">Browser</button><button role="tab">System</button></div><button class="menu" aria-label="Tile menu">⋯</button></div>
+          <table>
+            <thead><tr><th>Device</th><th class="num">Visitors</th></tr></thead>
+            <tbody>
+              <tr><td class="rowbar"><i style="width:calc((100% - 16px) * 1.00)"></i><span>Desktop</span></td><td class="num">803</td></tr>
+              <tr><td class="rowbar"><i style="width:calc((100% - 16px) * 0.46)"></i><span>Mobile</span></td><td class="num">371</td></tr>
+              <tr><td class="rowbar"><i style="width:calc((100% - 16px) * 0.04)"></i><span>Tablet</span></td><td class="num">30</td></tr>
+            </tbody>
+          </table>
+        </section>
+      </div>
+
+      <section class="card" aria-label="Saved question: demo to waitlist">
+        <div class="card-head"><h2>Demo to waitlist</h2><span class="tag">Funnel · saved by you</span><button class="menu" aria-label="Tile menu">⋯</button></div>
+        <div class="funnel">
+          <div class="step"><div class="col"><div class="fill" style="height:100%"></div></div><div class="name">Viewed a page</div><div class="nums"><b>1,204</b> visitors</div></div>
+          <div class="step"><div class="col"><div class="fill" style="height:32%"></div></div><div class="name">Started the demo</div><div class="nums"><b>388</b> · 32% went on</div></div>
+          <div class="step"><div class="col"><div class="fill" style="height:5%"></div></div><div class="name">Joined the waitlist</div><div class="nums"><b>61</b> · 16% went on</div></div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+<div class="note">Mockup. The numbers are made up.</div>
+</body>
+</html>

@@ -1,0 +1,75 @@
+{
+  "goal": "cfanalytics compatibility suite: the real posthog-node, posthog-js and posthog-ios against the real Worker under wrangler dev (docs/engineering.md, Real SDKs)",
+  "source": "cfanalytics-compat",
+  "maxConcurrency": 2,
+  "nodes": [
+    {
+      "id": "compat.harness",
+      "worker": {
+        "provider": "deepseek"
+      },
+      "work": {
+        "prompt": "You build the harness of cfanalytics' compatibility suite: the part that proves the real PostHog SDKs work unchanged against the real Worker (docs/engineering.md, \"Real SDKs\"). Two more workers add the posthog-js and posthog-ios clients after you, on top of what you write.\n\n## Your environment\n- You are at the root of an isolated git worktree of cfanalytics, detached at the head of the branch build/compat, which is master with waves 1 to 3 built. pleach runs you and checks your work with the gate named below.\n- Leave your work uncommitted. Do not create branches, commit or push. Never touch Cloudflare: everything runs against `wrangler dev` on this machine.\n- Delete with `trash`, never `rm`. A run may `rm` a temp folder that the same run created.\n- If something stops you that you cannot fix inside your own files, write BLOCKED.md at the repository root: what is wrong, where, and what would fix it. Then stop.\n\n## Read first\n- CLAUDE.md, docs/engineering.md (above all \"Real SDKs\" and \"A run leaves nothing behind\"), docs/spec/posthog-protocol.md, and decisions D-13, D-15, D-19 and D-20 in docs/decisions.md.\n- docs/reviews/2026-10-20-spike-s2.md: spike S2 ran these same SDKs against a spike Worker and lists what each needs (findings 1 to 7). Its code is on the branch spike/s2: read it with `git show spike/s2:spikes/s2/<path>`, for example `run.mjs`, `checks.mjs`, `clients/node.mjs`, `clients/browser.mjs`, `clients/macos.mjs`, `pages/*` and `macos/*`. Port what fits; do not copy its debug dump, since the real Worker has none.\n- scripts/lib/run-scope.mjs: every run keeps what it makes in its own scope and removes it at the end.\n- The Worker's routes and the tests that prove them, under apps/worker/src/features/.\n\n## What to build\n1. A workspace package `@cfanalytics/compat` in apps/compat/ (private, `\"type\": \"module\"`), with exact devDependencies `posthog-node` 5.56.2, `posthog-js` 1.438.12 and `playwright` 1.64.1, as spike S2 pinned them. Run `npx -y pnpm@12.14.0 install` so pnpm-lock.yaml takes them in. You may change apps/compat/, the root package.json (one script), pnpm-lock.yaml, and the docs named in step 6, and nothing else.\n2. A root script `\"compat\": \"node apps/compat/run.mjs\"`, so `pnpm compat [--only node,browser,ios]` runs the suite. It must exit 0 only when every check of the clients it ran passed. Print one line per check: `pass` or `FAIL`, its behaviour ID, what it checks, and its detail.\n3. run.mjs, in a run scope (openRunScope with exit handlers):\n   - Start the Worker with `pnpm --filter @cfanalytics/worker exec wrangler dev` on a port the OS picks, with `--persist-to <scope>/state`, its own process group recorded with recordChild(pid, { group: true }), and WRANGLER_LOG_PATH inside the scope. Wait for its ready line; 120 s catches a hang. LOCAL_UNSCOPED_PROJECT_STORES is \"1\" in local runs (D-19): pass it with `--var`.\n   - Apply the registry's D1 steps to that persisted state (`wrangler d1 migrations apply REGISTRY --local --persist-to \u2026`) and seed one project for the run, with a fresh id and token in the shapes the registry's CHECKs require (apps/worker/migrations/0001-registry.sql), and recording and heatmaps on.\n   - Read what the Worker stored straight from the persisted state, with Node's built-in `node:sqlite` opened read-only: the project's ProjectStore SQLite file under `<scope>/state`, and the R2 objects of the RECORDINGS bucket. Find the files by looking at what wrangler wrote; do not guess paths. Wrap this in a small module (store reader) the other clients use. The Worker gets no test-only route.\n   - Wait for an expected row by polling the store reader with a deadline, never with a fixed sleep.\n4. The posthog-node client (clients/node.mjs), from spike S2's: capture an event, identify with `$set`, alias, then shutdown. Checks, each named by its behaviour ID: the events are stored with `$lib` posthog-node (intake-01), gzip with Content-Encoding was read (intake-10), and the identify and alias joined the ids to one person in `person_distinct_ids` (identity-01, identity-12).\n5. Pure parts (the check list's verdict, the store reader's row mapping) get unit tests run by apps/compat's own `test` script with `node --test`, so the root `pnpm test` stays fast. The slow run is `pnpm compat` only. Give apps/compat a `typecheck` script with `checkJs`, so `pnpm typecheck` covers it.\n6. Docs: CLAUDE.md's test strategy table gets a `pnpm compat` row (what it checks, that it runs before each wave's pull request and not in `pnpm check`, and its measured time). docs/engineering.md's \"Real SDKs\" paragraph names apps/compat and `pnpm compat`.\n\n## Your gate\n`npx -y pnpm@12.14.0 compat --only node`\nIt must exit 0. Also leave `npx -y pnpm@12.14.0 lint` and `npx -y pnpm@12.14.0 typecheck` at exit 0. Run each yourself and read its exit code.\n\n## Your final message\nWhat you built, file by file; where wrangler keeps the store and R2 files; the gate's output lines; anything that does not work and why.\n"
+      },
+      "setup": "npx -y pnpm@12.14.0 install --prefer-offline",
+      "accept": {
+        "smoke": "npx -y pnpm@12.14.0 compat --only node"
+      },
+      "policy": {
+        "maxAttempts": 2,
+        "timeoutMs": 5400000
+      }
+    },
+    {
+      "id": "compat.browser",
+      "worker": {
+        "provider": "deepseek"
+      },
+      "work": {
+        "prompt": "You add the posthog-js client to cfanalytics' compatibility suite. The harness exists: apps/compat/run.mjs starts the real Worker under `wrangler dev`, seeds a project, and reads what was stored through its store reader. Read it before you start.\n\n## Your environment\n- You are at the root of an isolated git worktree of cfanalytics, detached at the head of the branch build/compat, which is master with waves 1 to 3 built. pleach runs you and checks your work with the gate named below.\n- Leave your work uncommitted. Do not create branches, commit or push. Never touch Cloudflare: everything runs against `wrangler dev` on this machine.\n- Delete with `trash`, never `rm`. A run may `rm` a temp folder that the same run created.\n- If something stops you that you cannot fix inside your own files, write BLOCKED.md at the repository root: what is wrong, where, and what would fix it. Then stop.\n\n## Read first\n- CLAUDE.md, docs/engineering.md (above all \"Real SDKs\" and \"A run leaves nothing behind\"), docs/spec/posthog-protocol.md, and decisions D-13, D-15, D-19 and D-20 in docs/decisions.md.\n- docs/reviews/2026-10-20-spike-s2.md: spike S2 ran these same SDKs against a spike Worker and lists what each needs (findings 1 to 7). Its code is on the branch spike/s2: read it with `git show spike/s2:spikes/s2/<path>`, for example `run.mjs`, `checks.mjs`, `clients/node.mjs`, `clients/browser.mjs`, `clients/macos.mjs`, `pages/*` and `macos/*`. Port what fits; do not copy its debug dump, since the real Worker has none.\n- scripts/lib/run-scope.mjs: every run keeps what it makes in its own scope and removes it at the end.\n- The Worker's routes and the tests that prove them, under apps/worker/src/features/.\n\n## What to build\n1. clients/browser.mjs and the pages it opens, from spike S2's browser client and pages. The pages load posthog-js 1.438.12 from the Worker itself, as a consumer will: `/static/1.438.12/array.full.js` from our host, with its remote config from `/array/<token>/config.js`. Serve the pages from a local page server on another port, so CORS is exercised.\n2. Present a visitor's browser, as spike S2's finding 1 explains: Playwright's full Chromium with the automation flag off and no \"Headless\" in the user agent. The `$pageleave` check runs in a headed browser, because headless Chromium sends no `$pageleave` on a same-tab link click (S2 report, finding 3, checked 2026-10-21). Everything else may run headless.\n3. Checks, each named by its behaviour ID, read from the stored rows and R2 objects:\n   - config-03, config-05, config-09, config-29: posthog-js loads its config and its lazy scripts from us with no SDK error on the console, and `$autocapture` events carry `$elements_chain`.\n   - intake-01, intake-10, intake-11: posthog-js's events are stored, gzip sent as text/plain included.\n   - recordings-01, recordings-02: a session's chunks reach R2 and play back in order, and text typed into an input is stored as asterisks.\n   - heatmaps-01: `$$heatmap` events become points and no event row.\n   - heatmaps-20: after scrolling and a same-tab link click, the stored `$pageleave` carries `$prev_pageview_max_scroll` (headed).\n   - cookieless-01: a cookieless page's events are stored under a `cookieless_` id.\n4. Register the client so `pnpm compat --only browser` runs it. Close every browser in a finally, so none outlives the run.\n\nYou may change apps/compat/ only.\n\n## Your gate\n`npx -y pnpm@12.14.0 compat --only browser`\nIt must exit 0. Also leave `npx -y pnpm@12.14.0 lint` and `npx -y pnpm@12.14.0 typecheck` at exit 0.\n\n## Your final message\nWhat you built; the gate's output lines; anything that does not work and why.\n"
+      },
+      "setup": "npx -y pnpm@12.14.0 install --prefer-offline",
+      "needs": ["compat.harness"],
+      "accept": {
+        "smoke": "npx -y pnpm@12.14.0 compat --only browser"
+      },
+      "policy": {
+        "maxAttempts": 2,
+        "timeoutMs": 5400000
+      }
+    },
+    {
+      "id": "compat.ios",
+      "worker": {
+        "provider": "deepseek"
+      },
+      "work": {
+        "prompt": "You add the posthog-ios client to cfanalytics' compatibility suite. The harness exists: apps/compat/run.mjs starts the real Worker under `wrangler dev`, seeds a project, and reads what was stored through its store reader. Read it before you start.\n\n## Your environment\n- You are at the root of an isolated git worktree of cfanalytics, detached at the head of the branch build/compat, which is master with waves 1 to 3 built. pleach runs you and checks your work with the gate named below.\n- Leave your work uncommitted. Do not create branches, commit or push. Never touch Cloudflare: everything runs against `wrangler dev` on this machine.\n- Delete with `trash`, never `rm`. A run may `rm` a temp folder that the same run created.\n- If something stops you that you cannot fix inside your own files, write BLOCKED.md at the repository root: what is wrong, where, and what would fix it. Then stop.\n\n## Read first\n- CLAUDE.md, docs/engineering.md (above all \"Real SDKs\" and \"A run leaves nothing behind\"), docs/spec/posthog-protocol.md, and decisions D-13, D-15, D-19 and D-20 in docs/decisions.md.\n- docs/reviews/2026-10-20-spike-s2.md: spike S2 ran these same SDKs against a spike Worker and lists what each needs (findings 1 to 7). Its code is on the branch spike/s2: read it with `git show spike/s2:spikes/s2/<path>`, for example `run.mjs`, `checks.mjs`, `clients/node.mjs`, `clients/browser.mjs`, `clients/macos.mjs`, `pages/*` and `macos/*`. Port what fits; do not copy its debug dump, since the real Worker has none.\n- scripts/lib/run-scope.mjs: every run keeps what it makes in its own scope and removes it at the end.\n- The Worker's routes and the tests that prove them, under apps/worker/src/features/.\n\n## What to build\n1. apps/compat/macos/: a macOS command-line target that uses posthog-ios through SwiftPM, from spike S2's `macos/` folder, and clients/ios.mjs that builds it with `swift build --scratch-path <scope>/swift` and runs it as its own process group.\n2. posthog-ios keeps its state on disk outside any run (S2 report, finding 4). Set `CFFIXED_USER_HOME` inside the run's scope, and fail the run if the real `~/Library/Application Support/com.posthog.unknown/<token>` folder exists after it.\n3. Checks, each named by its behaviour ID: its event and `$screen` are stored with `$lib` posthog-ios (intake-01), its `/flags` request with `api_key` answers (config-07), and its identify and alias joined the ids (identity-01).\n4. Register the client so `pnpm compat --only ios` runs it.\n\nYou may change apps/compat/ only.\n\n## Your gate\n`npx -y pnpm@12.14.0 compat --only ios`\nIt must exit 0. Also leave `npx -y pnpm@12.14.0 lint` and `npx -y pnpm@12.14.0 typecheck` at exit 0.\n\n## Your final message\nWhat you built; the gate's output lines; anything that does not work and why.\n"
+      },
+      "setup": "npx -y pnpm@12.14.0 install --prefer-offline",
+      "needs": ["compat.harness"],
+      "accept": {
+        "smoke": "npx -y pnpm@12.14.0 compat --only ios"
+      },
+      "policy": {
+        "maxAttempts": 2,
+        "timeoutMs": 5400000
+      }
+    },
+    {
+      "id": "compat.all",
+      "work": {
+        "command": "git log -1 --format=%H"
+      },
+      "setup": "npx -y pnpm@12.14.0 install --prefer-offline",
+      "needs": ["compat.browser", "compat.ios"],
+      "accept": {
+        "smoke": "npx -y pnpm@12.14.0 compat"
+      },
+      "policy": {
+        "maxAttempts": 1,
+        "timeoutMs": 1800000
+      }
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "apps/worker/migrations/0001-registry.sql": "381389d6f9cdf06cc1948319b385efd460e5b7692daa6801863639a4283001ff",
+  "apps/worker/src/platform/schema/0001-project-store.sql": "152485c4d08bc34c92a6817aff51ffaa93798f3aa99b65514120bd517c6abd11",
+  "apps/worker/migrations/0002-board-tiles.sql": "3a0313b42bba732780556d2caaaa4b01453bd2fb77845413f65525da87213d3c"
+}

@@ -1,0 +1,27 @@
+{
+  "name": "@cfanalytics/worker",
+  "version": "0.0.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "wrangler deploy --dry-run --outdir=dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --exclude \"**/*.size.test.ts\"",
+    "cf-typegen": "wrangler types",
+    "test:size": "vitest run size.test"
+  },
+  "dependencies": {
+    "@cfanalytics/shared": "workspace:*",
+    "hono": "4.13.13",
+    "isbot": "5.2.2"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-plugin": "1.4.5",
+    "@cloudflare/workers-types": "5.20261019.1",
+    "typescript": "7.0.2",
+    "vitest": "5.0.5",
+    "wrangler": "4.151.2"
+  }
+}

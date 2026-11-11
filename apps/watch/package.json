@@ -1,0 +1,18 @@
+{
+  "name": "@cfanalytics/watch",
+  "version": "0.0.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "wrangler deploy --dry-run --outdir=dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261019.1",
+    "typescript": "7.0.2",
+    "vitest": "5.0.5",
+    "wrangler": "4.151.2"
+  }
+}

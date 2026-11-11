@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // The watcher (D-30): every five minutes it asks production's /healthz and
+  // emails the owner when it fails twice in a row, and again when it is back.
+  // It runs apart from the Worker it watches, so a broken deploy cannot
+  // silence it. A template: its account, KV store, the address it asks
+  // (TARGET) and the addresses it mails (FROM, TO) come from the site file's
+  // watch block, joined in by `pnpm ops watch` (D-32, scripts/lib/site.mjs).
+  "name": "cfanalytics-watch-local",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": false,
+  "observability": { "enabled": true, "logs": { "enabled": true } },
+  "triggers": { "crons": ["*/5 * * * *"] }
+}

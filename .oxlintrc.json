@@ -1,0 +1,26 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "warn"
+  },
+  "plugins": ["typescript", "unicorn", "import"],
+  "env": {
+    "worker": true,
+    "es2024": true,
+    "node": true
+  },
+  "rules": {
+    "typescript/no-floating-promises": "error",
+    "typescript/no-misused-promises": "error",
+    "typescript/await-thenable": "error",
+    "import/no-unassigned-import": [
+      "error",
+      {
+        "allow": ["**/*.css", "@fontsource-variable/*"]
+      }
+    ]
+  },
+  "ignorePatterns": ["**/worker-configuration.d.ts", "apps/worker/assets/posthog/**"]
+}

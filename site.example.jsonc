@@ -1,0 +1,21 @@
+// An example site file (D-32, docs/operations.md). Copy it to a private folder
+// as cf-analytics.jsonc, fill in your own values, and point CFX_SITE at that
+// folder. Every value here is a placeholder; scripts/lifetimes.test.mjs reads
+// this file to know the stores a deployment binds.
+{
+  "account_id": "00000000000000000000000000000000", // your Cloudflare account
+  "admin_email": "owner@example.com", // the one person admitted to the dashboard (D-27)
+  "worker": {
+    "name": "cfanalytics",
+    "dashboard_host": "analytics.example.com", // the dashboard, and the commands' origin
+    "intake_hosts": ["e.shop.example.com"], // each product's own intake host (D-16)
+    "d1": { "name": "cfanalytics-registry", "id": "00000000-0000-4000-8000-000000000000" },
+    "r2_bucket": "cfanalytics-recordings"
+  },
+  "watch": {
+    "name": "cfanalytics-watch",
+    "kv_id": "11111111111111111111111111111111",
+    "from": "alerts@example.com", // an address on a domain with Email Sending on
+    "to": "owner@example.com" // a verified Email Routing destination
+  }
+}
