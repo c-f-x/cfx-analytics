@@ -384,3 +384,13 @@ Feature flags, error tracking, surveys, experiments and HogQL are not built, bec
 **Decision.** This repository is MIT, under the owner's copyright line in `LICENSE`, and each `package.json` says so. Third-party code keeps its own notice in `THIRD_PARTY_NOTICES.md`.
 
 **Consequences.** Anyone may use, change and sell copies of the code, including as a hosted service.
+
+## D-34 · The tool is named cfx-analytics · accepted (2026-11-11)
+
+**Made by.** The owner, for every c-f-x tool: "go for cfx-<toolname>" (cfx-kit D-9). Applied by the lead of this repository (#11).
+
+**Context.** D-1 of the family named tools `cf-<job>`, so this repository became `c-f-x/cf-analytics`. "cf-" reads like one of Cloudflare's own products, collides with existing packages and repositories, and does not carry the family's name.
+
+**Decision.** The tool is cfx-analytics. The repository is `c-f-x/cfx-analytics`, and GitHub redirects the old URL. The root package is `cfx-analytics`, the site file is `cfx-analytics.jsonc` (the family's conventions, section 4: one file per tool, named after it), and the agent skill is `cfx-analytics`. These keep their names: the Workers, D1, R2 and KV stores, the hostnames, the keychain service names, the key prefixes, and the workspace packages `@cfanalytics/*`, which are never published.
+
+**Consequences.** `scripts/site.test.mjs` fails when the site file is not named after the root package. The text the dashboard and the watcher's emails show still says "cfanalytics". Renaming what people see is a separate call for the owner. Entries above keep their original words.

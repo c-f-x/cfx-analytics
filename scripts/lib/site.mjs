@@ -10,7 +10,7 @@ import { parse } from "jsonc-parser";
 // @c-f-x/kit will publish the family's, and readSite is the one function to
 // swap when it does.
 
-export const SITE_FILE = "cf-analytics.jsonc";
+export const SITE_FILE = "cfx-analytics.jsonc";
 
 /**
  * @typedef {{

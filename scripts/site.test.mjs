@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { after, before, test } from "node:test";
 import { openRunScope } from "./lib/run-scope.mjs";
@@ -176,4 +176,12 @@ test("the site file is read from the CFX_SITE checkout, and its absence says wha
   const read = readSite(dir);
   assert.ok(read.ok);
   assert.equal(read.value.worker.name, "analytics");
+});
+
+test("the site file is named after the tool, as the family's conventions say", () => {
+  // c-f-x conventions, section 4: one file per tool, `<tool>.jsonc`. The
+  // tool's name is the root package's (D-34).
+  const root = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  assert.equal(SITE_FILE, `${root.name}.jsonc`);
+  assert.equal(root.name, "cfx-analytics");
 });

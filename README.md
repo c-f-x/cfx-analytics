@@ -1,6 +1,6 @@
-# cf-analytics
+# cfx-analytics
 
-**Product analytics that runs in your own Cloudflare account.** Your sites and apps send events with PostHog's own SDKs, unchanged. cf-analytics stores them in the EU, records sessions, draws heatmaps and answers questions from one dashboard.
+**Product analytics that runs in your own Cloudflare account.** Your sites and apps send events with PostHog's own SDKs, unchanged. cfx-analytics stores them in the EU, records sessions, draws heatmaps and answers questions from one dashboard.
 
 Moving a product over is a change of host:
 
@@ -19,7 +19,7 @@ curl https://e.shop.example.com/api/external/query \
   -d '{"kind":"trend","measure":"visitors","granularity":"day","range":{"kind":"last_days","days":7}}'
 ```
 
-cf-analytics is part of [c-f-x](https://github.com/c-f-x), a family of self-hosted tools on Cloudflare.
+cfx-analytics is part of [c-f-x](https://github.com/c-f-x), a family of self-hosted tools on Cloudflare.
 
 ![The board of a product: visitors, page views and sessions over the last 7 days against the 7 before, with its top pages, sources, countries and devices.](docs/images/board.png)
 
@@ -53,7 +53,7 @@ One Worker holds the intake, the query API and the dashboard. A small D1 databas
 You need a Cloudflare account on Workers Paid, a zone for the dashboard's host, and Node 24 or later.
 
 1. Create the resources `docs/operations.md` lists: the D1 database and R2 bucket in the EU jurisdiction, the bucket's lifecycle rule, the watcher's KV namespace and a private OAuth client for sign-in. There is no install command yet.
-2. Copy `site.example.jsonc` to `cf-analytics.jsonc` in a private folder outside this repository, and fill in your account id, hostnames, resource ids and addresses. Point `CFX_SITE` at that folder.
+2. Copy `site.example.jsonc` to `cfx-analytics.jsonc` in a private folder outside this repository, and fill in your account id, hostnames, resource ids and addresses. Point `CFX_SITE` at that folder.
 3. Deploy. Every command prints its plan and how to undo each step, and changes nothing without `--go`:
 
 ```bash
@@ -89,7 +89,7 @@ Tests are written from `docs/spec/behaviours.md` before the code, and each names
 
 ## Credits
 
-cf-analytics is our own code, built on ideas and tests from these MIT projects, each read at a pinned commit (`docs/donors.md`):
+cfx-analytics is our own code, built on ideas and tests from these MIT projects, each read at a pinned commit (`docs/donors.md`):
 
 - [traks](https://github.com/shivamanupadi/traks), for period and time-zone maths and the daily visitor hash
 - [InsightFlare](https://github.com/RavelloH/InsightFlare), for bot marking, the funnel planner and the architecture check

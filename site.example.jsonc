@@ -1,5 +1,5 @@
 // An example site file (D-32, docs/operations.md). Copy it to a private folder
-// as cf-analytics.jsonc, fill in your own values, and point CFX_SITE at that
+// as cfx-analytics.jsonc, fill in your own values, and point CFX_SITE at that
 // folder. Every value here is a placeholder; scripts/lifetimes.test.mjs reads
 // this file to know the stores a deployment binds.
 {

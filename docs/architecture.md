@@ -1,6 +1,6 @@
 # Architecture
 
-The parts of cfanalytics, what each may depend on, and where each kind of logic lives. Tables and their lifetimes are in `docs/data-model.md`. How code is written and tested is in `docs/engineering.md`. Why it is shaped this way is in `docs/decisions.md`.
+The parts of cfx-analytics, what each may depend on, and where each kind of logic lives. Tables and their lifetimes are in `docs/data-model.md`. How code is written and tested is in `docs/engineering.md`. Why it is shaped this way is in `docs/decisions.md`.
 
 ## The parts
 

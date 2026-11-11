@@ -1,6 +1,6 @@
 # Build plan
 
-The handover for the agent that builds cfanalytics. It is one continuous build of the whole architecture (decision D-11). The steps below are an order of dependencies, not releases. Each step lands as one or more pull requests, each reviewed with `/code-review` before merge. Nothing is deployed to Cloudflare without the owner's go.
+The handover for the agent that builds cfx-analytics. It is one continuous build of the whole architecture (decision D-11). The steps below are an order of dependencies, not releases. Each step lands as one or more pull requests, each reviewed with `/code-review` before merge. Nothing is deployed to Cloudflare without the owner's go.
 
 ## Before you start
 
@@ -86,7 +86,7 @@ Record each in `docs/operations.md`. Creating the Cloudflare resources waits for
 
 Each move is a pull request in that project's repo, made with the owner's go.
 - **The hand-built client.** Its analytics config answers our host. Its `visits()` door calls `/api/external/query` with a project secret key. Its list of processors and its privacy policy drop PostHog.
-- **The posthog-js site.** `NEXT_PUBLIC_POSTHOG_HOST` points at its intake host, and its posthog-js version matches the one cfanalytics serves (D-15). Its privacy text names cfanalytics and the recording retention.
+- **The posthog-js site.** `NEXT_PUBLIC_POSTHOG_HOST` points at its intake host, and its posthog-js version matches the one cfx-analytics serves (D-15). Its privacy text names cfx-analytics and the recording retention.
 
 ## Review points
 
