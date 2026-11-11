@@ -13,7 +13,7 @@ export function SignInScreen({ ready }: { ready: boolean }) {
           <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <BarChart3 className="size-5" />
           </span>
-          <span className="font-semibold text-lg tracking-tight">cfanalytics</span>
+          <span className="font-semibold text-lg tracking-tight">cfx-analytics</span>
         </div>
         <div className="flex flex-col gap-2">
           <h1 className="font-semibold text-3xl leading-tight tracking-tight">

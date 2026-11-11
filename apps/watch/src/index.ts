@@ -59,7 +59,7 @@ async function check(env: Env, now: number): Promise<void> {
   if (alert !== null) {
     const { subject, text } = alertEmail(alert, env.TARGET, state.since);
     await env.ALERT.send({
-      from: { email: env.FROM, name: "cfanalytics watch" },
+      from: { email: env.FROM, name: "cfx-analytics watch" },
       to: env.TO,
       subject,
       text,
