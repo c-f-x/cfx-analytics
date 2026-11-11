@@ -67,7 +67,7 @@ Each check that reads source text also runs on a sample it must flag, so a check
 - No test claims a fixed port, name or path. Ports come from the operating system, and folders come from the run's own scope.
 - A timeout catches hangs, not slowness.
 
-**A run leaves nothing behind.** Every test run, script and local server keeps what it creates in its own run folder from `scripts/lib/run-scope.mjs`. That folder sits under the system temp folder, and `WRANGLER_LOG_PATH` points into it. The run removes its folder on every ending. The next run sweeps the folders of runs that died, stopping the processes they recorded and moving their folders to the Trash. A process that starts processes of its own, such as wrangler dev, is started as a process group and recorded as one, so the processes it started stop with it.
+**A run leaves nothing behind.** Every test run, script and local server keeps what it creates in its own run folder from `scripts/lib/run-scope.mjs`. That folder sits under the system temp folder, and `WRANGLER_LOG_PATH` points into it. The run removes its folder on every ending. The next run sweeps the folders of runs that died, stopping the processes they recorded and moving their folders to the Trash. A sweep never mistakes a live run for a dead one: a run writes its owner file whole, by renaming a finished draft into place, and gives its folder a closing name with its pid before removing it. A folder another run removed while the sweep read it is skipped. A process that starts processes of its own, such as wrangler dev, is started as a process group and recorded as one, so the processes it started stop with it.
 
 ## Costs
 
