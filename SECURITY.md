@@ -6,7 +6,7 @@ Please don't open a public issue. Write to security@c-f-x.com, or use GitHub's p
 
 ## What counts
 
-cf-analytics holds other people's data: the visitors of the sites that send to it. The reports we most want are about:
+cfx-analytics holds other people's data: the visitors of the sites that send to it. The reports we most want are about:
 
 - reading or changing one product's data with another product's token or key;
 - reaching the dashboard's API without the owner's Cloudflare sign-in;

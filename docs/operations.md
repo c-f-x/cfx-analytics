@@ -1,6 +1,6 @@
 # Operations
 
-How cfanalytics is deployed, watched, backed up and exported. One deployment, production, has run since 2026-10-22 (D-30). The values that say where it runs live in a private site file, never in this repository (D-32).
+How cfx-analytics is deployed, watched, backed up and exported. One deployment, production, has run since 2026-10-22 (D-30). The values that say where it runs live in a private site file, never in this repository (D-32).
 
 ## Rules
 
@@ -12,7 +12,7 @@ How cfanalytics is deployed, watched, backed up and exported. One deployment, pr
 
 ## The site file
 
-An installation's values live in `cf-analytics.jsonc`, in a private checkout that the environment variable `CFX_SITE` names (the c-f-x family's conventions, section 4). Every `pnpm ops` command and `pnpm smoke` read it, and stop with the reason when it is missing or wrong. Each command joins it with the template configs, `apps/worker/wrangler.jsonc` and `apps/watch/wrangler.jsonc`, into its own scratch folder, which it removes when it ends (`scripts/lib/site.mjs`).
+An installation's values live in `cfx-analytics.jsonc`, in a private checkout that the environment variable `CFX_SITE` names (the c-f-x family's conventions, section 4). Every `pnpm ops` command and `pnpm smoke` read it, and stop with the reason when it is missing or wrong. Each command joins it with the template configs, `apps/worker/wrangler.jsonc` and `apps/watch/wrangler.jsonc`, into its own scratch folder, which it removes when it ends (`scripts/lib/site.mjs`).
 
 Its shape is `site.example.jsonc` at the repository's root: copy it, fill in your own values, and keep the copy private. Every value in the example is a placeholder.
 
@@ -70,6 +70,6 @@ The smoke test, the backup, the export and the restore sign in to the dashboard'
 
 `GET /healthz` answers 200 when the Worker runs and both the registry and the recordings bucket answer, and 503 when either does not. It does not touch a ProjectStore, so a failing store shows as failed intake in the logs and in `pnpm smoke`, not here.
 
-Cloudflare's notifications have no alert for Worker errors, so the watcher, `cfanalytics-watch`, does it (D-30). It is a separate Worker on a five-minute cron trigger, so a broken deploy of the Worker it watches cannot silence it. It emails the site file's `watch.to` from `watch.from` when two checks in a row fail, and again on the first check that passes after. It costs nothing: cron triggers, one KV key and sends to a verified address are free. In the c-f-x family, cf-status takes this job over later.
+Cloudflare's notifications have no alert for Worker errors, so the watcher, `cfanalytics-watch`, does it (D-30). It is a separate Worker on a five-minute cron trigger, so a broken deploy of the Worker it watches cannot silence it. It emails the site file's `watch.to` from `watch.from` when two checks in a row fail, and again on the first check that passes after. It costs nothing: cron triggers, one KV key and sends to a verified address are free. In the c-f-x family, cfx-status takes this job over later.
 
 The Worker writes one log line per failure (`project_store_failed`, `registry_unavailable`, `sign_in_failed` and others) to Workers Logs, which keeps 7 days on the paid plan. `pnpm ops wrangler production -- tail --status error` shows them live.

@@ -1,6 +1,6 @@
 # Data model
 
-Every store cfanalytics keeps, what it holds, how long, and what removes the rest. Each store's rule is built with the store, and a test in the owning slice ages fixture rows and proves the rule. Where the parts are is in `docs/architecture.md`.
+Every store cfx-analytics keeps, what it holds, how long, and what removes the rest. Each store's rule is built with the store, and a test in the owning slice ages fixture rows and proves the rule. Where the parts are is in `docs/architecture.md`.
 
 ## Lifetimes
 

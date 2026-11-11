@@ -1,6 +1,6 @@
 # Third-party notices
 
-cfanalytics is our own code (D-1). This file holds the licence notice of every piece of third-party code the repository carries, added in the same change as the code (`docs/engineering.md`, "Copied code").
+cfx-analytics is our own code (D-1). This file holds the licence notice of every piece of third-party code the repository carries, added in the same change as the code (`docs/engineering.md`, "Copied code").
 
 ## posthog-js 1.438.12
 

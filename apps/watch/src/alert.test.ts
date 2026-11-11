@@ -47,10 +47,10 @@ describe("nextWatch", () => {
 describe("alertEmail", () => {
   it("ops-01 · the email names the address, what happened and since when, in UTC", () => {
     const down = alertEmail("down", "https://analytics.example.com/healthz", NOW);
-    expect(down.subject).toBe("cfanalytics is failing");
+    expect(down.subject).toBe("cfx-analytics is failing");
     expect(down.text).toContain("https://analytics.example.com/healthz");
     expect(down.text).toContain("2026-10-22 18:00 UTC");
     const up = alertEmail("up", "https://analytics.example.com/healthz", NOW);
-    expect(up.subject).toBe("cfanalytics is healthy again");
+    expect(up.subject).toBe("cfx-analytics is healthy again");
   });
 });

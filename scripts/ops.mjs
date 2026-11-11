@@ -356,13 +356,13 @@ async function health(args) {
   console.log(`${new Date().toISOString()} ${verdict.message}`);
   if (verdict.healthy) return;
   if (args.includes("--notify")) {
-    const text = `cfanalytics ${deployment.env} is failing: ${verdict.message}`.replaceAll(
+    const text = `cfx-analytics ${deployment.env} is failing: ${verdict.message}`.replaceAll(
       '"',
       "'",
     );
     spawnSync("osascript", [
       "-e",
-      `display notification "${text}" with title "cfanalytics" sound name "Basso"`,
+      `display notification "${text}" with title "cfx-analytics" sound name "Basso"`,
     ]);
   }
   process.exit(1);

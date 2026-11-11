@@ -48,12 +48,12 @@ export function alertEmail(
 ): { subject: string; text: string } {
   if (alert === "down") {
     return {
-      subject: "cfanalytics is failing",
+      subject: "cfx-analytics is failing",
       text: `${target} has failed two checks in a row, since ${utc(since)}.\n\nThe Worker's logs say why: pnpm --filter @cfanalytics/worker exec wrangler tail --env production --status error\n\nAnother email follows when it is healthy again.`,
     };
   }
   return {
-    subject: "cfanalytics is healthy again",
+    subject: "cfx-analytics is healthy again",
     text: `${target} answers healthy again, at ${utc(since)}.`,
   };
 }
