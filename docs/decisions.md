@@ -363,7 +363,7 @@ Feature flags, error tracking, surveys, experiments and HogQL are not built, bec
 
 ## D-32 · An installation's values live in a private site file · accepted (2026-11-11), supersedes D-31's origin lookup
 
-**Made by.** The owner's ruling for the c-f-x family (cf-kit conventions, section 4), applied by the lead of this repository for the public release (issue #30).
+**Made by.** The owner's ruling for the c-f-x family (cf-kit conventions, section 4), applied by the lead of this repository for the public release (`jahala/cfanalytics#30`).
 
 **Context.** This repository is to be public as `c-f-x/cf-analytics`. `apps/worker/wrangler.jsonc` held production's account id, D1 id and hostnames, `apps/watch/wrangler.jsonc` the watcher's account, KV id and addresses, and the ops scripts the admin's email. The family rule is that a public repository holds none of these. `@c-f-x/kit` will publish the family's loader, but it is not published yet.
 

@@ -20,7 +20,7 @@ A key it does not know, or a value of the wrong shape, is an error that names it
 
 ## Cloudflare resources
 
-One deployment serves every product (D-10). Its resources keep the names they were made with (issue #31). Their ids and hostnames are in the site file.
+One deployment serves every product (D-10). Its resources keep the names they were made with (the owner's ruling, 2026-11-11). Their ids and hostnames are in the site file.
 
 | Resource | Name | Undo |
 |---|---|---|

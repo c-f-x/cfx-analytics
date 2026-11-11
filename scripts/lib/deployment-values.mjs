@@ -105,7 +105,7 @@ export function deploymentKeyViolations(config) {
 /**
  * The site file's hostnames, addresses and ids found in one file's text. Its
  * names (the Worker's, the database's) are kept in the open on purpose
- * (issue #31), so only values of those three shapes count.
+ * (the owner's ruling, 2026-11-11), so only values of those three shapes count.
  * @param {import("./site.mjs").Site} site
  * @param {string} file
  * @param {string} text

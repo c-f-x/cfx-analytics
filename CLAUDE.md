@@ -2,7 +2,7 @@
 
 Product analytics for the owner's projects, running on Cloudflare. It accepts what PostHog's SDKs send, keeps each project's data in its own Durable Object in the EU, records sessions into an EU R2 bucket, and draws heatmaps. It is our own code, built from parts and test ideas harvested from MIT projects.
 
-**State (2026-10-22): production runs.** The build runs by the skeleton-and-waves method of decisions D-17 and D-21, and from wave 2 as pleach plans (D-23, `docs/waves/`). Waves 1 to 4 are filled and audited (`docs/reviews/build-ledger.md`), and so are the real-SDK suite, the dashboard (`apps/web`), Cloudflare sign-in (D-27) and the operations commands (`pnpm ops`, `docs/operations.md`). Production runs on the dashboard's host and each product's own intake host (D-16, D-31), and replaced staging (D-30); `apps/watch` emails the owner when it fails. Where it runs lives in a private site file named by `CFX_SITE`, never in this repository (D-32, `docs/operations.md`). Next: the public release as `c-f-x/cf-analytics` (issues #30, #31).
+**State (2026-11-11): production runs, and this repository is its home.** The build runs by the skeleton-and-waves method of decisions D-17 and D-21, and from wave 2 as pleach plans (D-23, `docs/waves/`). Waves 1 to 4 are filled and audited (`docs/reviews/build-ledger.md`), and so are the real-SDK suite, the dashboard (`apps/web`), Cloudflare sign-in (D-27) and the operations commands (`pnpm ops`, `docs/operations.md`). Production runs on the dashboard's host and each product's own intake host (D-16, D-31), and replaced staging (D-30); `apps/watch` emails the owner when it fails. Where it runs lives in a private site file named by `CFX_SITE`, never in this repository (D-32, `docs/operations.md`). This repository, `c-f-x/cf-analytics`, began on 2026-11-11 from the cleaned tree of `jahala/cfanalytics` with a fresh history; the old repository is archived and private. Next: the c-f-x ground rules (cf-kit D-8), then the owner's go to make it public.
 
 ## Start here
 
@@ -62,7 +62,7 @@ The fast suite takes under 30 s, so there is no changed-only run: when unsure wh
 
 ## CI
 
-CI runs on the owner's Mac: two self-hosted runners, `cfanalytics-mac-1` and `-2`, labelled `cfanalytics`, set up with the ci-runner skill on 2026-10-19. They run only while the Mac is awake and logged in. To return to GitHub's runners, set the repository variable `CI_RUNS_ON` to `"ubuntu-latest"` (with the quotes). Idle size measured after the first green run: 238 MB per runner, of which the checkout is 1 MB.
+CI runs on GitHub's hosted runners (`ubuntu-latest`). This repository is to be public, and a runner on the owner's Mac would run any pull request's code, so it has none. The repository variable `CI_RUNS_ON` can name other runners as a JSON value. Measured on 2026-11-11: `pnpm check` takes about 7 minutes there, of which the Worker's tests take about 140 s and the size tests about 176 s.
 
 ## Tooling
 

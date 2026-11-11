@@ -13,8 +13,9 @@ concurrency:
 
 jobs:
   check:
-    # Runs on the owner's Mac (see the ci-runner skill). CI_RUNS_ON overrides it.
-    runs-on: ${{ fromJSON(vars.CI_RUNS_ON || '["self-hosted", "macOS", "cfanalytics"]') }}
+    # GitHub's hosted runners: a public repository must not run pull
+    # requests' code on the owner's Mac. CI_RUNS_ON can name others, as JSON.
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON || '"ubuntu-latest"') }}
     steps:
       - run: echo "TMPDIR=$RUNNER_TEMP" >> "$GITHUB_ENV"
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
