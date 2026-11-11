@@ -22,6 +22,7 @@ export const DEFAULT_ROOT = path.join(os.tmpdir(), "cfanalytics-runs");
 
 const OWNER = "owner.json";
 const PENDING = ".pending-";
+const CLOSING = ".closing-";
 const POLL_MS = 20;
 const GONE_TIMEOUT_MS = 10_000;
 
@@ -93,6 +94,37 @@ async function waitUntilGone(records, startTimeOf, groupAlive) {
   }
 }
 
+// Writes the owner file whole: to a file of its own, then renamed over the
+// old one. A rename is atomic, so a sweep reading beside it sees the old file
+// or the new one, never a half-written one it would take for a dead run's.
+function writeOwner(dir, owner) {
+  const draft = path.join(dir, `${OWNER}.${randomUUID()}.tmp`);
+  writeFileSync(draft, JSON.stringify(owner));
+  renameSync(draft, path.join(dir, OWNER));
+}
+
+// The pid in a pending or closing folder's name, or NaN for any other name.
+function pidInName(name) {
+  for (const prefix of [PENDING, CLOSING]) {
+    if (name.startsWith(prefix)) return Number(name.slice(prefix.length).split("-")[0]);
+  }
+  return Number.NaN;
+}
+
+// Trashes a dead run's folder, unless it is already gone: another run may
+// remove a folder between a sweep's listing and its trash. True when this
+// sweep moved it. A trash that fails while the folder is still there throws.
+function trashIfPresent(dir, trash) {
+  if (!existsSync(dir)) return false;
+  try {
+    trash(dir);
+    return true;
+  } catch (error) {
+    if (!existsSync(dir)) return false;
+    throw error;
+  }
+}
+
 function readOwner(dir) {
   try {
     return JSON.parse(readFileSync(path.join(dir, OWNER), "utf8"));
@@ -121,20 +153,19 @@ export function sweepDeadRuns(
     const dir = path.join(root, name);
     const owner = readOwner(dir);
     if (owner === null) {
-      // A run that died between creating its folder and writing its owner file.
-      // Its pid is in the folder's name.
-      const pid = name.startsWith(PENDING) ? Number(name.slice(PENDING.length)) : Number.NaN;
+      // A folder being made or removed has its run's pid in its name, and is
+      // left alone while that run lives. Any other folder without a readable
+      // owner is a dead run's, or was removed while this sweep read it.
+      const pid = pidInName(name);
       if (Number.isInteger(pid) && startTimeOf(pid) !== null) continue;
-      trash(dir);
-      swept.push(dir);
+      if (trashIfPresent(dir, trash)) swept.push(dir);
       continue;
     }
     if (isSame(owner, startTimeOf)) continue;
     for (const child of owner.children ?? []) {
       if (isRunning(child, startTimeOf, groupAlive)) kill(child.pid, child.group === true);
     }
-    trash(dir);
-    swept.push(dir);
+    if (trashIfPresent(dir, trash)) swept.push(dir);
   }
   return swept;
 }
@@ -160,8 +191,9 @@ export function openRunScope({
   const pending = path.join(root, `${PENDING}${process.pid}`);
   const dir = path.join(root, randomUUID());
   mkdirSync(pending);
-  writeFileSync(path.join(pending, OWNER), JSON.stringify(owner));
+  writeOwner(pending, owner);
   renameSync(pending, dir);
+  const closing = path.join(root, `${CLOSING}${process.pid}-${randomUUID()}`);
 
   let stopped = false;
 
@@ -173,7 +205,7 @@ export function openRunScope({
    */
   function recordChild(pid, { group = false } = {}) {
     owner.children.push({ pid, startedAt: startTimeOf(pid), group });
-    writeFileSync(path.join(dir, OWNER), JSON.stringify(owner));
+    writeOwner(dir, owner);
   }
 
   // Kills this run's processes and removes its folder. Synchronous, so the
@@ -184,8 +216,17 @@ export function openRunScope({
     for (const child of owner.children) {
       if (isRunning(child, startTimeOf, groupAlive)) kill(child.pid, child.group);
     }
-    // This run created the folder, so it may remove it outright.
-    rmSync(dir, { recursive: true, force: true });
+    // First the folder takes a closing name with this run's pid, so a sweep
+    // beside it does not take it for a dead run's while its files go. This
+    // run created the folder, so it may then remove it outright.
+    let target = dir;
+    try {
+      renameSync(dir, closing);
+      target = closing;
+    } catch {
+      // Already gone: nothing to rename.
+    }
+    rmSync(target, { recursive: true, force: true });
   }
 
   /** Stops this run's processes, removes its folder, and reports anything left. */
@@ -193,7 +234,7 @@ export function openRunScope({
     stop();
     await waitUntilGone(owner.children, startTimeOf, groupAlive);
     const leftovers = [];
-    if (existsSync(dir)) leftovers.push(dir);
+    for (const folder of [dir, closing]) if (existsSync(folder)) leftovers.push(folder);
     for (const child of owner.children) {
       if (isRunning(child, startTimeOf, groupAlive)) {
         leftovers.push(`${child.group ? "process group" : "process"} ${child.pid}`);
