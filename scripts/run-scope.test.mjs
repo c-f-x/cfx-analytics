@@ -1,7 +1,15 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { existsSync, mkdirSync, readdirSync, renameSync, rmSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { after, test } from "node:test";
@@ -200,4 +208,125 @@ test("a recorded group whose leader pid is now another process's is not killed",
   });
   assert.deepEqual(swept, [scope.dir]);
   assert.deepEqual(killed, []);
+});
+
+// The four tests below are ported from c-f-x/cfx-kit's
+// packages/kit/src/run-scope.test.ts (#8). Each reproduces a race between a
+// sweep and a run beside it.
+
+// Runs `code` as an ES module in a child process and resolves to its exit code.
+// The child is stopped after the tests if a failure leaves it running.
+function runModule(code) {
+  const child = spawn(process.execPath, ["--input-type=module", "-e", code], {
+    stdio: ["ignore", "ignore", "inherit"],
+  });
+  stopAfterTests(child.pid);
+  return new Promise((resolve) => child.once("exit", (exitCode) => resolve(exitCode)));
+}
+
+// Waits, by looking, until `ready()` holds. The deadline catches a hang, such
+// as a child that died before it got there; it is not a measure of speed.
+async function until(ready, what, timeoutMs = 30_000) {
+  const deadline = Date.now() + timeoutMs;
+  while (!ready()) {
+    if (Date.now() > deadline) throw new Error(`gave up waiting for ${what}`);
+    // oxlint-disable-next-line no-await-in-loop
+    await new Promise((resolve) => setImmediate(resolve));
+  }
+}
+
+test("a sweep that meets a folder removed under it skips it, and does not throw", () => {
+  const root = path.join(ROOT, `vanish-${randomUUID()}`);
+  const dead = path.join(root, randomUUID());
+  mkdirSync(dead, { recursive: true });
+  // A run that is long gone: no process has this pid with this start time.
+  writeFileSync(
+    path.join(dead, "owner.json"),
+    JSON.stringify({ pid: 2_147_483_000, startedAt: "never", children: [] }),
+  );
+  // Another run removes the folder between the sweep's listing and its trash.
+  const swept = sweepDeadRuns(root, {
+    trash: (target) => {
+      rmSync(target, { recursive: true, force: true });
+      throw new Error(`trash: ${target}: no such file or directory`);
+    },
+  });
+  assert.deepEqual(swept, []);
+});
+
+test("a sweep leaves alone a folder its live run is closing, and sweeps a dead run's", () => {
+  const root = path.join(ROOT, `closing-${randomUUID()}`);
+  // A closing run renames its folder to ".closing-<pid>-<id>" before it removes it.
+  const live = path.join(root, `.closing-${process.pid}-${randomUUID()}`);
+  const dead = path.join(root, `.closing-2147483000-${randomUUID()}`);
+  mkdirSync(live, { recursive: true });
+  mkdirSync(dead, { recursive: true });
+  const swept = sweepDeadRuns(root, { trash: trashIntoBin });
+  assert.deepEqual(swept, [dead]);
+  assert.ok(existsSync(live), "the closing run's folder is still there");
+});
+
+test("runs that open and close scopes at the same time never fail", async () => {
+  const root = path.join(ROOT, `busy-${randomUUID()}`);
+  const bin = path.join(ROOT, `busy-bin-${randomUUID()}`);
+  mkdirSync(bin, { recursive: true });
+  const code = `
+    import { randomUUID } from "node:crypto";
+    import { renameSync } from "node:fs";
+    import path from "node:path";
+    import { openRunScope } from ${JSON.stringify(RUN_SCOPE)};
+    const trash = (target) => renameSync(target, path.join(${JSON.stringify(bin)}, randomUUID()));
+    for (let i = 0; i < 60; i += 1) {
+      const scope = openRunScope({ root: ${JSON.stringify(root)}, trash });
+      const { leftovers } = await scope.close();
+      if (leftovers.length > 0) process.exit(3);
+    }
+  `;
+  const codes = await Promise.all([1, 2, 3, 4].map(() => runModule(code)));
+  assert.deepEqual(codes, [0, 0, 0, 0]);
+  assert.deepEqual(readdirSync(bin), [], "no live run's folder was swept");
+});
+
+test("a sweep never takes the folder of a live run that is recording processes", async () => {
+  const root = path.join(ROOT, `recording-${randomUUID()}`);
+  mkdirSync(root, { recursive: true });
+  const stop = path.join(ROOT, `recording-stop-${randomUUID()}`);
+  // The live run writes its sleep's pid here, so this test can stop the sleep
+  // even when the live run crashed and left it behind.
+  const sleeperFile = path.join(ROOT, `recording-sleeper-${randomUUID()}`);
+  // The live run records the same long sleep over and over, so its owner file
+  // is rewritten while this test sweeps the root beside it.
+  const code = `
+    import { spawn } from "node:child_process";
+    import { existsSync, writeFileSync } from "node:fs";
+    import { openRunScope } from ${JSON.stringify(RUN_SCOPE)};
+    const scope = openRunScope({ root: ${JSON.stringify(root)}, trash: () => {} });
+    const sleeper = spawn("sleep", ["600"], { stdio: "ignore" });
+    writeFileSync(${JSON.stringify(sleeperFile)}, String(sleeper.pid));
+    let i = 0;
+    while (!existsSync(${JSON.stringify(stop)})) {
+      scope.recordChild(sleeper.pid);
+      i += 1;
+      if (i % 50 === 0) await new Promise((resolve) => setImmediate(resolve));
+    }
+    const { leftovers } = await scope.close();
+    process.exit(leftovers.length === 0 ? 0 : 3);
+  `;
+  const exited = runModule(code);
+  const taken = [];
+  try {
+    await until(
+      () => readdirSync(root).some((name) => !name.startsWith(".")),
+      "the live run's folder",
+    );
+    for (let i = 0; i < 200; i += 1) taken.push(...sweepDeadRuns(root, { trash: trashIntoBin }));
+  } finally {
+    // The live run closes its scope, which stops its sleep, before any
+    // assertion here can end the test.
+    writeFileSync(stop, "");
+  }
+  const exitCode = await exited;
+  if (existsSync(sleeperFile)) stopAfterTests(Number(readFileSync(sleeperFile, "utf8")));
+  assert.deepEqual(taken, [], "the live run's folder was swept");
+  assert.equal(exitCode, 0);
 });
