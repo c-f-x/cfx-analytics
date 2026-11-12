@@ -142,7 +142,7 @@ function schemaSteps(root) {
 // The install line for the one posthog-js version the Worker serves (D-15),
 // read from where scripts/posthog-scripts.mjs keeps it.
 function posthogJsInstall(root) {
-  const file = "apps/worker/src/features/config/core.ts";
+  const file = "packages/shared/src/posthog.ts";
   const found = readFileSync(path.join(root, file), "utf8").match(
     /export const POSTHOG_JS_VERSION = "([^"]+)";/,
   );

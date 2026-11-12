@@ -584,7 +584,7 @@ The dashboard's own rules (D-24, D-27). The pure ones are unit tests in `apps/we
 - `dashboard-09` · given Recordings, then the list can be filtered by person, page, event and length, and a recording plays in the rrweb player beside its events · D-24 · keep
 - `dashboard-10` · given Events, then the newest events are listed with their properties, and Properties lists the property names seen · D-24 · keep
 - `dashboard-11` · given Settings, then a changed setting is saved and read back, a your-own-traffic rule's value keeps the type chosen for it (text, number or yes/no), a new key is shown once, revoking a key asks first, and deleting the product needs its name typed · D-24, projects-04, projects-14 · keep
-- `dashboard-12` · given All products, then each product shows its visitors over the last 7 days, and a new product's dialog shows its token and snippet · D-24 · keep
+- `dashboard-12` · given All products, then each product shows its visitors over the last 7 days; a new product's dialog and its board before the first event show the install line for the pinned posthog-js version, the snippet with its token and this deployment's address, and that recording and heatmaps are off, with a link to Settings · D-24, D-15, D-35 · keep
 - `dashboard-13` · given every screen, then it reads in light and dark mode, and its empty, loading and failed states are designed rather than blank · D-24, design.md · keep
 - `dashboard-14` · given a phone's width, then the rail is a drawer behind a menu button, and moving to a place closes it · D-24 · keep
 

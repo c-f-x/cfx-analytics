@@ -1,5 +1,5 @@
 import { env } from "cloudflare:test";
-import { isJsonObject } from "@cfanalytics/shared";
+import { isJsonObject, POSTHOG_JS_VERSION } from "@cfanalytics/shared";
 import { describe, expect, it } from "vitest";
 import { withoutStores } from "../../../test/helpers/bindings.ts";
 import {
@@ -22,7 +22,7 @@ import {
 import { asRecord } from "../../../test/helpers/json.ts";
 import { newToken, seedProject } from "../../../test/helpers/registry.ts";
 import worker from "../../index.ts";
-import { POSTHOG_JS_VERSION, SCRIPT_KINDS, SCRIPT_SHA256 } from "./core.ts";
+import { SCRIPT_KINDS, SCRIPT_SHA256 } from "./core.ts";
 import { mountConfig } from "./http.ts";
 
 // The SDK's load-time routes as the SDKs call them (config-01 to config-32,
