@@ -9,7 +9,7 @@ let package = Package(
   name: "CompatMac",
   platforms: [.macOS(.v13)],
   dependencies: [
-    .package(url: "https://github.com/PostHog/posthog-ios", exact: "3.92.0")
+    .package(url: "https://github.com/PostHog/posthog-ios", exact: "3.94.0")
   ],
   targets: [
     .executableTarget(
