@@ -3,7 +3,7 @@ import { execFileSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { after, before, test } from "node:test";
-import { POSTHOG_JS_VERSION } from "../apps/worker/src/features/config/core.ts";
+import { POSTHOG_JS_VERSION } from "../packages/shared/src/posthog.ts";
 import {
   BRIEF,
   BRIEF_MAX_LINES,

@@ -1,13 +1,10 @@
-import { isJsonObject, type ProjectSettings } from "@cfanalytics/shared";
+import { isJsonObject, POSTHOG_JS_VERSION, type ProjectSettings } from "@cfanalytics/shared";
 import { err, ok, type Result } from "../../platform/result.ts";
 
 // What posthog-js and posthog-ios are told on load, built from the project's
 // settings, and which pinned script a /static/ path names (config-01 to
 // config-32; posthog-protocol.md §6, §7.1, §7.8, §10.2, §11 item 10). Spike
 // S2 proved the config's shape against the real SDKs. Pure.
-
-/** The one posthog-js version whose lazy scripts we serve (D-15). Upgraded together with the consumers. */
-export const POSTHOG_JS_VERSION = "1.438.12";
 
 /** The lazy script kinds we serve (config-25). Every one is served whatever the settings (config-28). */
 export const SCRIPT_KINDS = [

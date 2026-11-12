@@ -396,3 +396,14 @@ Feature flags, error tracking, surveys, experiments and HogQL are not built, bec
 The owner added: "we have to change all reference in UI etc from cfanalytics to cfx-analytics". So the dashboard's title and sign-in wordmark, the watcher's email subjects and sender name, and the deploy watch's notification say cfx-analytics. The theme's storage key, `cfanalytics-theme`, keeps its name: nobody sees it, and a new key would reset every saved light or dark choice.
 
 **Consequences.** `scripts/site.test.mjs` fails when the site file is not named after the root package. Two names people see live in Cloudflare and still say cfanalytics: the OAuth client's name on the sign-in consent screen, and the watcher's sending address. Only the owner sees them, when signing in and in the alerts. The owner chose to keep them: "we can keep those for now". Entries above keep their original words.
+
+## D-35 · A new product's screens show the install line, and send recording and heatmaps to Settings · accepted (2026-11-12)
+
+**Made by.** The owner, choosing between two mockups of the real screens: "A".
+
+**Context.** A new product's dialog and its empty board showed only the snippet. Connecting a site on 2026-10-28 stalled twice on what they left out (#9): which posthog-js version to install, and that recording and heatmaps start off. Variant A added a line under the snippet with a link to Settings. Variant B put the two switches in the dialog and on the board.
+
+**Decision.** Both screens, and Settings' Install field, show two steps: the install line for the pinned posthog-js version, then the snippet. The dialog and the empty board add one line: "Session recording and heatmaps are off. Turn them on in Settings." Settings stays the one place for those switches. The version has one home, `packages/shared/src/posthog.ts`, which the Worker, the dashboard and the onboarding guide all read.
+
+**Consequences.** dashboard-12's end-to-end check reads the install line and the Settings link on both screens. A posthog-js upgrade changes the install line everywhere with no other edit.
+

@@ -16,14 +16,14 @@ import {
 } from "@/components/ui/dialog.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Label } from "@/components/ui/label.tsx";
-import { Snippet } from "@/features/board/install.tsx";
+import { RecordingNote, Snippet } from "@/features/board/install.tsx";
 import { DEFAULT_BOARD, querySpecOf } from "@/lib/board.ts";
 import { cn } from "@/lib/cn.ts";
 import { change, count, moment } from "@/lib/format.ts";
 import { useAnswer, useCreateProject, useProjects } from "@/lib/queries.ts";
 
 // All products: each with its visitors over the last seven days, and a way to
-// add one. A new product's dialog shows its token and snippet straight away.
+// add one. A new product's dialog shows how to install it straight away.
 
 const VISITORS = { kind: "trend", measure: "visitors", granularity: "day", compare: true } as const;
 
@@ -137,10 +137,12 @@ function NewProduct({
             <DialogHeader>
               <DialogTitle>{made.name} is ready</DialogTitle>
               <DialogDescription>
-                Add this snippet to the site. Events show on the board as they arrive.
+                Install posthog-js on the site and start it with this snippet. Events show on the
+                board as they arrive.
               </DialogDescription>
             </DialogHeader>
             <Snippet token={made.token} />
+            <RecordingNote projectId={made.id} />
             <DialogFooter>
               <Button
                 variant="primary"

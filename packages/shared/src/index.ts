@@ -5,6 +5,7 @@ export * from "./base64url.ts";
 export * from "./errors.ts";
 export * from "./json.ts";
 export * from "./limits.ts";
+export * from "./posthog.ts";
 export * from "./privacy.ts";
 export * from "./query.ts";
 export * from "./range.ts";
