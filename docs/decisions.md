@@ -396,3 +396,14 @@ Feature flags, error tracking, surveys, experiments and HogQL are not built, bec
 The owner added: "we have to change all reference in UI etc from cfanalytics to cfx-analytics". So the dashboard's title and sign-in wordmark, the watcher's email subjects and sender name, and the deploy watch's notification say cfx-analytics. The theme's storage key, `cfanalytics-theme`, keeps its name: nobody sees it, and a new key would reset every saved light or dark choice.
 
 **Consequences.** `scripts/site.test.mjs` fails when the site file is not named after the root package. Two names people see live in Cloudflare and still say cfanalytics: the OAuth client's name on the sign-in consent screen, and the watcher's sending address. Only the owner sees them, when signing in and in the alerts. The owner chose to keep them: "we can keep those for now". Entries above keep their original words.
+
+## D-36 · The lead deploys checked work · accepted (2026-11-12)
+
+**Made by.** The owner: "why does it need my go? if you've vetted everything, you are the lead?"
+
+**Context.** Since the start, a hard rule said nothing changed in Cloudflare without the owner's explicit go, so every deploy of merged, checked work waited for them. The owner's own rules give deploy and operational calls to the lead.
+
+**Decision.** The lead deploys from a clean checkout of current `master`, once its CI has passed: `pnpm ops deploy production` prints the plan and each step's undo, the same command with `--go` runs the whole check and ships the build it checked, and `pnpm smoke production` follows. The owner's explicit go is still needed to create or delete a Cloudflare resource, to delete or restore data, and for anything that costs money.
+
+**Consequences.** Merged work reaches production without waiting for the owner. A failed smoke test is the lead's to undo, with the undo line the plan printed.
+

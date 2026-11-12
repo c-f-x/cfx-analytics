@@ -4,7 +4,7 @@ How cfx-analytics is deployed, watched, backed up and exported. One deployment, 
 
 ## Rules
 
-- Nothing is created or changed in Cloudflare without the owner's explicit go. Work up to deploy-ready needs no go.
+- The lead deploys checked work from current `master`: dry run first, then `--go`, then `pnpm smoke production` (D-36). Creating or deleting a Cloudflare resource, deleting or restoring data, and anything that costs money need the owner's explicit go.
 - Every operation is one command. It stops at its first failing step and says which step failed. Before it changes anything, it prints what it will do and how to undo each step, and it changes nothing without `--go`.
 - A deploy runs every check, builds the Worker once, and ships that build: it fails unless the bundle it uploaded is byte for byte the one it checked.
 - Secrets are drawn and piped by the commands, never typed, printed or put on a command line.
