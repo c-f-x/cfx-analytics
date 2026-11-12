@@ -5,6 +5,7 @@ import { existsSync, mkdirSync, rmSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
+import { POSTHOG_JS_VERSION } from "../../packages/shared/src/posthog.ts";
 import { sessionToken } from "../../scripts/lib/ops.mjs";
 import { openRunScope } from "../../scripts/lib/run-scope.mjs";
 import { failedCount, formatCheck } from "./checks.mjs";
@@ -514,6 +515,24 @@ async function screens(page, api, shop, { acts, shoot, expectFailure }) {
   /** @type {(behaviour: string, what: string, body: () => Promise<string>) => Promise<void>} */
   const checkWith = (behaviour, what, body) => check(checks, behaviour, what, body, shoot);
 
+  // What a new product's dialog and its empty board both show (dashboard-12):
+  // the install line for the posthog-js version the Worker serves (D-15),
+  // then the snippet with this deployment's address, then a link to Settings,
+  // where recording and heatmaps start off.
+  const installProblems = async (/** @type {string} */ where) => {
+    const blocks = await page.locator("pre").allTextContents();
+    const install = `npm install --save-exact posthog-js@${POSTHOG_JS_VERSION}`;
+    if (blocks[0]?.trim() !== install) return `${where}'s install line reads "${blocks[0]}"`;
+    const snippet = blocks[1] ?? "";
+    if (!snippet.includes("posthog.init(") || !snippet.includes(origin)) {
+      return `${where}'s snippet reads "${snippet}"`;
+    }
+    const settings = page.getByRole("link", { name: "Turn them on in Settings" });
+    if (!(await visible(settings))) return `${where} does not say recording and heatmaps are off`;
+    const href = (await settings.getAttribute("href")) ?? "";
+    return href.endsWith("/settings") ? "" : `${where}'s Settings link goes to "${href}"`;
+  };
+
   await checkWith(
     "dashboard-12",
     `All products lists the product with its visitors (${mode})`,
@@ -532,21 +551,20 @@ async function screens(page, api, shop, { acts, shoot, expectFailure }) {
   if (acts) {
     await checkWith(
       "dashboard-12",
-      "a new product's dialog shows its token and snippet",
+      "a new product's dialog and empty board show the pinned install line, the snippet, and that recording and heatmaps are off",
       async () => {
         await page.getByRole("button", { name: "New product" }).first().click();
         await page.getByLabel("Name").fill("Empty site");
         await page.getByRole("button", { name: "Add product" }).click();
         if (!(await visible(page.getByText("Empty site is ready")))) return "no ready dialog";
-        const snippet = (await page.locator("pre").first().textContent()) ?? "";
         await shoot("new-product");
-        if (!snippet.includes("posthog.init(") || !snippet.includes(origin)) {
-          return `the snippet reads "${snippet}"`;
-        }
+        const dialog = await installProblems("the dialog");
+        if (dialog !== "") return dialog;
         await page.getByRole("button", { name: "Open the board" }).click();
-        return (await visible(page.getByText("No events yet")))
-          ? ""
-          : "the new product's board shows no install panel";
+        if (!(await visible(page.getByText("No events yet")))) {
+          return "the new product's board shows no install panel";
+        }
+        return installProblems("the empty board");
       },
     );
     await shoot("board-empty");

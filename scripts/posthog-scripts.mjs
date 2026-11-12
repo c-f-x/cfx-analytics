@@ -14,7 +14,8 @@ import { ROOT } from "./lib/source.mjs";
 // list of kinds keeps one home, SCRIPT_KINDS in the config slice. npm checks
 // the package's integrity as it downloads it. The script then prints each
 // file's SHA-256 for SCRIPT_SHA256. Upgrading also means changing
-// POSTHOG_JS_VERSION and the notice in THIRD_PARTY_NOTICES.md, and running
+// POSTHOG_JS_VERSION (packages/shared/src/posthog.ts) and the notice in
+// THIRD_PARTY_NOTICES.md, and running
 // pnpm check, whose config-27 test compares the served bytes with the hashes.
 
 const FOLDER = path.join(ROOT, "apps/worker/assets/posthog");

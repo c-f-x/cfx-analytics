@@ -1,11 +1,10 @@
-import { DEFAULT_SETTINGS, type ProjectSettings } from "@cfanalytics/shared";
+import { DEFAULT_SETTINGS, POSTHOG_JS_VERSION, type ProjectSettings } from "@cfanalytics/shared";
 import { describe, expect, it } from "vitest";
 import { err, ok } from "../../platform/result.ts";
 import {
   cacheControlFor,
   configScript,
   flagsToken,
-  POSTHOG_JS_VERSION,
   type RecordingConfig,
   type RemoteConfig,
   remoteConfig,

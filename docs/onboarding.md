@@ -4,9 +4,9 @@ How to start sending a website's or a server's events to a cfx-analytics deploym
 
 ## 1. Make the product
 
-In the dashboard, open Products and choose New product. The dialog shows the product's token and a snippet. The token is public by design: it only lets a page send events, and the daily limits in Settings bound what it can send.
+In the dashboard, open Products and choose New product. The dialog shows the install line for the pinned posthog-js version, and a snippet with the product's token. The token is public by design: it only lets a page send events, and the daily limits in Settings bound what it can send.
 
-A new product records nothing but events. Session recording and heatmaps start off. Turn them on in the product's Settings, under "What is collected", if you want playback or click maps.
+A new product records nothing but events. Session recording and heatmaps start off. The dialog links to the product's Settings, where you turn them on under "What is collected" if you want playback or click maps.
 
 ## 2. Choose where it sends
 
@@ -79,7 +79,7 @@ posthog-js drops every event from a browser it takes for a bot. Headless Playwri
 
 ## 7. See that it arrives
 
-- The product's board fills as events arrive. Until the first one, it shows the install snippet.
+- The product's board fills as events arrive. Until the first one, it shows the install line and the snippet.
 - Recordings lists each recorded session, once recording is on and a session is longer than the shortest kept (Settings).
 - From a script on the deployment's Mac, `scripts/lib/dashboard-api.mjs` signs in to the dashboard's API, the same way `pnpm smoke` and `pnpm ops export` do. Ask `/api/projects/<id>/query`, `/recordings` or `/heatmap`.
 - A product's own backend reads its own numbers from `/api/external/query`, with one of its secret keys as a Bearer token (Settings, Keys). A secret key never goes into a page.
