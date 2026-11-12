@@ -25,7 +25,7 @@ Product analytics for the owner's projects, running on Cloudflare. It accepts wh
 ## Hard rules
 
 - The trunk is `master`. Work on a branch and open a pull request.
-- Nothing is created or changed in Cloudflare without the owner's explicit go. Work up to deploy-ready needs no go.
+- The lead deploys checked work from current `master`: dry run first, then `--go`, then `pnpm smoke production` (D-36). Creating or deleting a Cloudflare resource, deleting or restoring data, and anything that costs money need the owner's explicit go.
 - Delete with `trash`, never `rm`. A run may `rm` a temp folder that the same run created.
 - A test comes before the code it proves, and names the behaviour ID it proves (`intake-03`). Never delete a failing test.
 - No mocks of our own code, no stubs, no TODOs, no fallbacks and no compatibility shims without the owner's approval.
