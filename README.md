@@ -66,6 +66,8 @@ pnpm smoke production
 
 `pnpm ops backup`, `restore` and `export` copy your data out and back. `docs/operations.md` covers each command.
 
+To connect a website or a server and see its events arrive, follow `docs/onboarding.md`.
+
 ## Develop
 
 ```bash
