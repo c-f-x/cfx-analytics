@@ -3,6 +3,7 @@ import { execFileSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { after, before, test } from "node:test";
+import { POSTHOG_JS_VERSION } from "../apps/worker/src/features/config/core.ts";
 import {
   BRIEF,
   BRIEF_MAX_LINES,
@@ -69,6 +70,20 @@ test("the generated-block check flags a stale block and an unknown one", () => {
   assert.notEqual(text, stale);
   const { unknown } = renderGenerated("<!-- generated:nothing -->\n<!-- /generated:nothing -->");
   assert.deepEqual(unknown, ["nothing"]);
+});
+
+test("the onboarding guide installs the posthog-js version the Worker serves (D-15)", () => {
+  assert.ok(CHECKED_DOCS.includes("docs/onboarding.md"));
+  const block = "<!-- generated:posthog-js-install -->\n<!-- /generated:posthog-js-install -->";
+  const { text, unknown } = renderGenerated(block);
+  assert.deepEqual(unknown, []);
+  assert.match(
+    text,
+    new RegExp(
+      `npm install --save-exact posthog-js@${POSTHOG_JS_VERSION.replaceAll(".", "\\.")}\n`,
+    ),
+  );
+  assert.match(readDoc("docs/onboarding.md"), /<!-- generated:posthog-js-install -->/);
 });
 
 for (const doc of CHECKED_DOCS) {

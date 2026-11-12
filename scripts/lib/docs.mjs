@@ -19,6 +19,7 @@ export const CHECKED_DOCS = [
   "docs/data-model.md",
   "docs/design.md",
   "docs/engineering.md",
+  "docs/onboarding.md",
   "docs/operations.md",
 ];
 
@@ -138,10 +139,22 @@ function schemaSteps(root) {
   return steps.map((s) => `- \`${s}\``).join("\n");
 }
 
+// The install line for the one posthog-js version the Worker serves (D-15),
+// read from where scripts/posthog-scripts.mjs keeps it.
+function posthogJsInstall(root) {
+  const file = "apps/worker/src/features/config/core.ts";
+  const found = readFileSync(path.join(root, file), "utf8").match(
+    /export const POSTHOG_JS_VERSION = "([^"]+)";/,
+  );
+  if (found === null) throw new Error(`${file} holds no POSTHOG_JS_VERSION`);
+  return ["```sh", `npm install --save-exact posthog-js@${found[1]}`, "```"].join("\n");
+}
+
 export const GENERATORS = {
   layout: (root) => layout(root),
   bindings: () => bindings(),
   "schema-steps": (root) => schemaSteps(root),
+  "posthog-js-install": (root) => posthogJsInstall(root),
 };
 
 /** The doc with every generated block rendered from the code. Unknown block names are an error. */

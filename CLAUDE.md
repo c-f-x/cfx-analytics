@@ -16,6 +16,7 @@ Product analytics for the owner's projects, running on Cloudflare. It accepts wh
 | `docs/data-model.md` | Every store, its lifetime, and the schema steps |
 | `docs/engineering.md` | How code is written and tested, and the guard behind each rule |
 | `docs/operations.md` | Cloudflare resources, commands, health |
+| `docs/onboarding.md` | Connecting a website or a server, and seeing that its events arrive |
 | `docs/design.md` | Where the dashboard's look comes from |
 | `docs/spec/behaviours.md` | The specification. Tests are written from it, before the code. |
 | `docs/spec/posthog-protocol.md` | What the PostHog SDKs send and expect, from their source |
