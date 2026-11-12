@@ -23,14 +23,14 @@ PostHog's protocol comes from PostHog's own MIT SDKs and docs (`docs/spec/postho
 
 | What | From | Into slice | How |
 |---|---|---|---|
-| Period, time zone and daylight-saving maths (`resolvePeriod`, `previousRange`, bucket generation) | traks `packages/shared/src/queries.ts:202-472` | `query` | Idea; written with `now` and `tz` passed in, and with the DST and date-line tests traks never wrote |
+| Period, time zone and daylight-saving maths (`resolvePeriod`, `previousRange`, bucket generation) | traks `packages/shared/src/queries.ts:202-472` | `query` | Idea; written with `now` and `tz` passed in, and with daylight-saving and date-line tests of our own |
 | Comparing this period with the last in one scan, and conditional aggregation | traks `queries.ts:534-797` | `query` | Ideas only; rewrite for SQLite with bound parameters |
 | Visitor hash rotating daily, refusing an empty secret | traks `apps/platform/collect/src/index.ts:152-211` | `cookieless` | Adapt to PostHog's inputs (project, salt, IP, user agent, host) |
 | Referrer cleaner | traks `collect/src/lib/referrer.ts` | `enrich` | Idea only; written from `docs/spec/behaviours.md` (enrich-19 to enrich-22) |
 | Bot and AI-referrer lists | traks `packages/shared/src/bots.ts`, `ai-sources.ts` | `enrich` | Idea; the bots come from `isbot` (MIT), a dependency, and seven AI crawler names of our own (`apps/worker/src/features/enrich/bots.ts`) |
 | Bot classifier and its test | InsightFlare `src/lib/edge/collector/bot-protection.ts` | `enrich` | Idea; ours uses `isbot` (MIT) too |
 | Funnel planner: staged steps, conversion window, structural budgets | InsightFlare `providers/d1/internal/funnel-planner.ts` | `query` | Port the algorithm onto our `events` table; it already targets SQLite |
-| Batching with a revision check, so a late write never overwrites a newer one | InsightFlare `src/lib/edge/ingest/flush.ts`, `scheduler.ts` | `events`, `recordings` | Pattern only; never the 1,905-line class |
+| Batching with a revision check, so a late write never overwrites a newer one | InsightFlare `src/lib/edge/ingest/flush.ts`, `scheduler.ts` | `events`, `recordings` | Pattern only |
 | Architecture allowlist check | InsightFlare `scripts/check-architecture.ts` | `scripts/` | Idea; we keep fewer rules |
 | Pure SQL templates with table-driven SQL-text tests | flarelytics worker query templates | `query` | Pattern |
 
@@ -38,10 +38,10 @@ PostHog's protocol comes from PostHog's own MIT SDKs and docs (`docs/spec/postho
 
 | What | Why |
 |---|---|
-| Any donor's dashboard UI | Huge (InsightFlare's is 119k lines), and not our design |
-| traks' route and page monoliths, its isolate globals, its UA parser, its session model | Hidden state; it misdetects Samsung Internet and iPads; it has no identified users |
-| InsightFlare's query engine, filter DSL, typed DAL and SQLite stand-in for D1 | 77k lines with three SQL paths half-migrated; we test on real runtimes (D-12) |
-| counterscale's query class, R2 rollup and tracker | SQL injection across sites; the rollup never merges and is never read; posthog-js is our tracker |
-| flarelytics' funnel queries | Unordered daily ratios, not funnels |
+| Any donor's dashboard UI | Not our design (`docs/design.md`) |
+| traks' routes and pages, its isolate globals, its user-agent parser, its session model | We keep no state in module scope, parse user agents our own way (`enrich`), and model identified users (`identity`) |
+| InsightFlare's query engine, filter DSL, typed DAL and SQLite stand-in for D1 | We query our own tables in each project's store, and test on real runtimes (D-12) |
+| counterscale's query class, R2 rollup and tracker | Each project's data lives in its own store (D-3), and posthog-js is our tracker |
+| flarelytics' funnel queries | Our funnels are ordered steps within a conversion window (query-04) |
 | workers-sentinel | Error tracking is not built (D-11) |
-| Every donor's legacy shims, demo modes and mock providers | Against our rules |
+| Every donor's compatibility shims, demo modes and mock providers | We ship none (`CLAUDE.md`, hard rules) |
