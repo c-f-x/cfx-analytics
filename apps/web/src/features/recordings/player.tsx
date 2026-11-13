@@ -1,4 +1,4 @@
-import type { EventsResult } from "@cfanalytics/shared";
+import type { Answer, EventsResult, QuerySpec } from "@cfanalytics/shared";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
 import { ArrowLeft, Pause, Play } from "lucide-react";
@@ -9,11 +9,10 @@ import { loadReplayer } from "@/components/replayer.ts";
 import { ErrorState, SkeletonRows } from "@/components/states.tsx";
 import { Button, buttonVariants } from "@/components/ui/button.tsx";
 import { Tooltip } from "@/components/ui/tooltip.tsx";
-import { apiText } from "@/lib/api.ts";
+import { api, apiText } from "@/lib/api.ts";
 import { cn } from "@/lib/cn.ts";
 import { duration, moment } from "@/lib/format.ts";
-import { useAnswer } from "@/lib/queries.ts";
-import { type EventKind, eventsOf, labelOf } from "@/lib/replay.ts";
+import { type EventKind, eventsOf, labelOf, readAllPages } from "@/lib/replay.ts";
 
 // One recording played back with rrweb, scripts off and typed text already
 // masked by the Worker (recordings-02), with the session's events beside it
@@ -22,6 +21,12 @@ import { type EventKind, eventsOf, labelOf } from "@/lib/replay.ts";
 // moment playing is highlighted.
 
 const SPEEDS = [1, 2, 4] as const;
+
+/** How close the player's clock must be to a row's moment to count as reached. */
+const REACHED_MS = 50;
+
+/** The most of a session's events the list reads (recordings-38). */
+const SESSION_EVENTS_CAP = 2000;
 
 /** What the player lets the events list do: where the recording starts, and a way to move to a moment in it. */
 interface PlayerControl {
@@ -46,17 +51,30 @@ export function PlayerScreen() {
     queryFn: () => apiText(`/api/projects/${projectId}/recordings/${sessionId}/chunks`),
     staleTime: Number.POSITIVE_INFINITY,
   });
-  const events = useAnswer<EventsResult>(projectId, {
-    kind: "events",
-    range: { kind: "last_days", days: 3650 },
-    limit: 200,
-    includeBots: true,
-    includeInternal: true,
-    filter: { op: "eq", property: { of: "event", name: "$session_id" }, value: sessionId },
+  const events = useQuery({
+    queryKey: ["session-events", projectId, sessionId],
+    queryFn: () =>
+      readAllPages(async (cursor) => {
+        const spec: QuerySpec = {
+          kind: "events",
+          range: { kind: "last_days", days: 3650 },
+          limit: 500,
+          includeBots: true,
+          includeInternal: true,
+          filter: { op: "eq", property: { of: "event", name: "$session_id" }, value: sessionId },
+          ...(cursor === undefined ? {} : { cursor }),
+        };
+        const answer = await api<Answer<EventsResult>>(`/api/projects/${projectId}/query`, {
+          method: "POST",
+          body: spec,
+        });
+        return answer.result;
+      }, SESSION_EVENTS_CAP),
+    staleTime: 30_000,
   });
   const rows = useMemo(
     () =>
-      (events.data?.result.rows ?? []).toReversed().flatMap((row) => {
+      (events.data?.rows ?? []).toReversed().flatMap((row) => {
         const label = labelOf(row);
         if (label === null) return [];
         const offset = control === null ? null : Math.max(0, Date.parse(row.ts) - control.start);
@@ -69,7 +87,11 @@ export function PlayerScreen() {
       ? [{ offset: each.offset, kind: each.kind, label: each.label }]
       : [],
   );
-  const current = rows.findLastIndex((each) => each.offset !== null && each.offset <= now);
+  // The player's clock can read a few milliseconds short of a moment it was
+  // moved to, so a row counts as reached within this tolerance.
+  const current = rows.findLastIndex(
+    (each) => each.offset !== null && each.offset <= now + REACHED_MS,
+  );
   const currentUuid = rows[current]?.row.uuid;
   useEffect(() => {
     if (currentUuid === undefined) return;
@@ -150,6 +172,12 @@ export function PlayerScreen() {
                     </button>
                   </li>
                 ))}
+                {events.data.more ? (
+                  <li className="border-t px-4 py-2 text-muted-foreground text-xs">
+                    Only the last {SESSION_EVENTS_CAP.toLocaleString()} events are shown. Earlier
+                    ones were left out.
+                  </li>
+                ) : null}
               </ol>
             )}
           </Card>

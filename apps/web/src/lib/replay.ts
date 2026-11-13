@@ -162,3 +162,24 @@ export function labelOf(row: {
       return { label: event, kind: "other" };
   }
 }
+
+/**
+ * Every row of a paged answer, newest first, up to `cap` rows (recordings-38).
+ * `more` is true when rows were left out. The page reader is passed in, so the
+ * caller does the I/O.
+ */
+export async function readAllPages<R>(
+  page: (cursor?: string) => Promise<{ rows: R[]; nextCursor?: string }>,
+  cap: number,
+): Promise<{ rows: R[]; more: boolean }> {
+  const rows: R[] = [];
+  let cursor: string | undefined;
+  do {
+    // Each page needs the cursor the one before it gave.
+    // oxlint-disable-next-line no-await-in-loop
+    const answer = await page(cursor);
+    rows.push(...answer.rows);
+    cursor = answer.nextCursor;
+  } while (cursor !== undefined && rows.length < cap);
+  return { rows: rows.slice(0, cap), more: rows.length > cap || cursor !== undefined };
+}
