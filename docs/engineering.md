@@ -1,6 +1,6 @@
 # Engineering
 
-How code is written and tested here. Every rule names the check that fails when it is broken, or says that nothing holds it yet. The test commands and their measured times are in `CLAUDE.md`.
+How code is written and tested here. Every rule names the check that fails when it is broken, or says that nothing holds it yet. The test commands and their measured times are in `AGENTS.md`.
 
 ## Writing code
 
@@ -34,7 +34,7 @@ How code is written and tested here. Every rule names the check that fails when 
 | Every workspace package carries the root's version, so a release tag names one version | `scripts/versions.test.mjs` |
 | Master holds no skeleton marker (`unbuilt`, decision D-17) | `scripts/architecture.test.mjs` |
 | A build worker changes only its own files and leaves no marker in them | `scripts/wave-check.mjs`, run by the worker and again in the audit |
-| Docs name only paths that exist, generated tables match the code, and `CLAUDE.md` stays under 150 lines | `scripts/docs.test.mjs` |
+| Docs name only paths that exist, generated tables match the code, and `AGENTS.md` stays under 150 lines | `scripts/docs.test.mjs` |
 | A run leaves nothing behind, even when killed | `scripts/run-scope.test.mjs` |
 | An operation stops at its first failing step | `scripts/check.test.mjs` |
 | A deploy names the undo of every step before it runs, and ships only the bundle it checked | `scripts/ops.test.mjs` |

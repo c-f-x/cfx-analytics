@@ -4,7 +4,7 @@ The handover for the agent that builds cfx-analytics. It is one continuous build
 
 ## Before you start
 
-Read `CLAUDE.md`, then the docs it lists. When a decision looks wrong to you, say so before building around it.
+Read `AGENTS.md`, then the docs it lists. When a decision looks wrong to you, say so before building around it.
 
 The foundations are in place: the doc, architecture, config, schema-step, run-scope and check-runner guards, and the tooling. Keep every guard green, and add the guard named in `docs/engineering.md` when the code it guards lands.
 
