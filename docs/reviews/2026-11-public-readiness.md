@@ -55,9 +55,9 @@ Command: `gitleaks git . --log-opts="--all" --redact` over every branch. It scan
 
 | What | Commits | Files at the tip |
 |---|---|---|
-| The owner's Gmail address | 6 | `apps/worker/src/platform/env.ts`, `scripts/lib/dashboard-api.mjs`, `scripts/ops.test.mjs`, `docs/plans/2026-10-21-overnight-goal.md`, `docs/reviews/2026-10-22-overnight.md` |
+| The owner's Gmail address | 6 | `apps/worker/src/platform/env.ts`, `scripts/lib/dashboard-api.mjs`, `scripts/ops.test.mjs`, `cfanalytics:docs/plans/2026-10-21-overnight-goal.md`, `cfanalytics:docs/reviews/2026-10-22-overnight.md` |
 | The owner's company address | 1, and 1 commit message | `apps/watch/src/index.ts`, `apps/watch/wrangler.jsonc`, `scripts/ops.mjs`, `docs/decisions.md`, `docs/operations.md` |
-| Paths on the owner's Mac | 5 | `docs/plans/2026-10-21-overnight-goal.md`, `docs/waves/w2/fill.plan.json`, `docs/waves/w3/close.plan.json`, `docs/waves/w3/fill.plan.json`, `docs/waves/w4/fill.plan.json` |
+| Paths on the owner's Mac | 5 | `cfanalytics:docs/plans/2026-10-21-overnight-goal.md`, `docs/waves/w2/fill.plan.json`, `docs/waves/w3/close.plan.json`, `docs/waves/w3/fill.plan.json`, `docs/waves/w4/fill.plan.json` |
 | The Cloudflare account id | 8 | both `wrangler.jsonc` files, `docs/operations.md`, `scripts/ops.test.mjs`, the overnight plan and review |
 | D1 and KV ids | 5 | both `wrangler.jsonc` files, `docs/operations.md`, the overnight review |
 | The owner's domains and product names | 18 or more | 36 files name a private product; 31 name one product's domain, most of them in the Jev review's raw answers and the list of consumers |
@@ -78,13 +78,13 @@ Command: `gitleaks git . --log-opts="--all" --redact` over every branch. It scan
 
 ## Vendor names, for the owner's decision
 
-The analytics vendor's name appears in tracked files in these areas: `README.md` (3 mentions), `CLAUDE.md` (4), `THIRD_PARTY_NOTICES.md`, the worker's code (42 files, mostly package and protocol names), the compatibility suite (20 files), the dashboard (1), `packages/shared` (2), 11 top-level docs, `docs/spec/` (2), `docs/research/` (21), `docs/reviews/` (4) and `docs/waves/` (8). The code's mentions are protocol names the SDKs send, such as `$posthog_cookieless`, and cannot change. Command: `git grep -liE posthog origin/master`.
+The analytics vendor's name appears in tracked files in these areas: `README.md` (3 mentions), `CLAUDE.md` (4), `THIRD_PARTY_NOTICES.md`, the worker's code (42 files, mostly package and protocol names), the compatibility suite (20 files), the dashboard (1), `packages/shared` (2), 11 top-level docs, `docs/spec/` (2), `cfanalytics:docs/research/` (21), `docs/reviews/` (4) and `docs/waves/` (8). The code's mentions are protocol names the SDKs send, such as `$posthog_cookieless`, and cannot change. Command: `git grep -liE posthog origin/master`.
 
 ## Gaps against cf-kit's conventions
 
 | Section | Gap |
 |---|---|
-| 1, layout | No `docs/contract.md`. `wrangler.jsonc` is at `apps/worker/`, not the root |
+| 1, layout | No `docs/contract.md` (planned). `wrangler.jsonc` is at `apps/worker/`, not the root |
 | 3, deploy path | `pnpm ops <command>`, not `pnpm ops <tool> <command>`. No `install` or `uninstall` |
 | 4, deployment values | Held in tracked files; no site file. The check misses them (above) |
 | 5, lifetimes | No lifetimes check. The sweep logs `sweep`, not `sweep_done` |
