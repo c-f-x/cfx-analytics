@@ -81,6 +81,7 @@ posthog-js drops every event from a browser it takes for a bot. Headless Playwri
 
 - The product's board fills as events arrive. Until the first one, it shows the install line and the snippet.
 - Recordings lists each recorded session, once recording is on and a session is longer than the shortest kept (Settings).
+- A recording keeps each image's address, not the image, and the player loads it from the site while you watch. So a password-protected site's images show in its recordings only if it serves its image files without the password.
 - From a script on the deployment's Mac, `scripts/lib/dashboard-api.mjs` signs in to the dashboard's API, the same way `pnpm smoke` and `pnpm ops export` do. Ask `/api/projects/<id>/query`, `/recordings` or `/heatmap`.
 - A product's own backend reads its own numbers from `/api/external/query`, with one of its secret keys as a Bearer token (Settings, Keys). A secret key never goes into a page.
 

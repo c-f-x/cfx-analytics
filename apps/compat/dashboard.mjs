@@ -674,7 +674,7 @@ async function screens(page, api, shop, { acts, shoot, expectFailure }) {
 
   await checkWith(
     "dashboard-09",
-    `Recordings lists the session, and it plays beside its events (${mode})`,
+    `Recordings lists the session, and it plays beside its events in plain words, with marks on its timeline (${mode})`,
     async () => {
       await page.goto(`${product}/recordings`);
       const row = page.locator("tbody tr").first();
@@ -684,6 +684,42 @@ async function screens(page, api, shop, { acts, shoot, expectFailure }) {
       if (!(await visible(page.getByRole("button", { name: "Play" })))) return "no player";
       if (!(await visible(page.getByText("Events in this session")))) return "no session events";
       await page.locator("iframe").first().waitFor({ timeout: SCREEN_WAIT_MS });
+      // The events in plain words (recordings-37), each page view and click a
+      // mark on the timeline, and a mark moves the player and the highlight.
+      const list = page.locator("ol li button");
+      await list.first().waitFor({ timeout: SCREEN_WAIT_MS });
+      const labels = (await list.allTextContents()).map((text) => text.replace(/^\d+[smh]\s*/, ""));
+      if (!labels.some((label) => label.startsWith("Opened /"))) {
+        return `no page view in plain words: ${labels.join("; ")}`;
+      }
+      if (!labels.some((label) => label.startsWith("Clicked '"))) {
+        return `no click in plain words: ${labels.join("; ")}`;
+      }
+      if (labels.some((label) => label.startsWith("$"))) {
+        return `a raw event name is listed: ${labels.join("; ")}`;
+      }
+      const marked = labels.filter((label) =>
+        /^(Opened|Clicked|Rage-clicked|Submitted)/.test(label),
+      );
+      const marks = page.getByRole("button", {
+        name: /^\d+[smh], (Opened|Clicked|Rage-clicked|Submitted)/,
+      });
+      if ((await marks.count()) !== marked.length) {
+        return `${String(await marks.count())} marks for ${String(marked.length)} page views and clicks`;
+      }
+      const last = marks.last();
+      const name = (await last.getAttribute("aria-label")) ?? "";
+      await last.click();
+      const at = name.split(",")[0] ?? "";
+      const readout = page.getByText(new RegExp(`^${at} / `));
+      if (!(await visible(readout))) return `the player did not move to ${at}`;
+      // The highlight follows the player, so wait for the row the mark names.
+      const label = name.slice(at.length + 2);
+      const current = page.locator('ol li button[aria-current="true"]', { hasText: label });
+      if (!(await visible(current))) {
+        const shown = await page.locator('ol li button[aria-current="true"]').allTextContents();
+        return `the highlighted row reads "${shown.join("; ")}", not "${name}"`;
+      }
       await shoot("player");
       return "";
     },
