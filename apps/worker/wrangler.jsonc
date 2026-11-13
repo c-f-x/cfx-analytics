@@ -9,6 +9,18 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat"],
+  // The Worker's secrets, so a deploy fails while one is missing, and
+  // apps/worker/.dev.vars.example names the same ones for local runs. Wrangler
+  // does not inherit this into named environments, so the deploy copies it in.
+  "secrets": {
+    "required": [
+      "AUTH_SECRET",
+      "ADMIN_EMAIL",
+      "DASHBOARD_ORIGIN",
+      "CLOUDFLARE_CLIENT_ID",
+      "CLOUDFLARE_CLIENT_SECRET"
+    ]
+  },
   "observability": {
     "enabled": true,
     "logs": { "enabled": true }

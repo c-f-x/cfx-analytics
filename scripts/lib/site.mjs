@@ -236,6 +236,8 @@ export function joinWorker(template, site, dir) {
         ],
         durable_objects: base.durable_objects,
         migrations: base.migrations,
+        // Wrangler does not inherit the required secrets into an environment.
+        ...(base.secrets === undefined ? {} : { secrets: base.secrets }),
         r2_buckets: [
           {
             binding: "RECORDINGS",

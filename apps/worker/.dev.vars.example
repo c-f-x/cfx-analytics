@@ -1,0 +1,8 @@
+# The Worker's secrets for local runs, exactly those wrangler.jsonc lists in
+# secrets.required. Copy this to .dev.vars, which git ignores, and fill it in.
+# Tests and the compatibility suite pass their own values and need no file.
+AUTH_SECRET=a-long-random-string-for-local-runs-only
+ADMIN_EMAIL=owner@example.com
+DASHBOARD_ORIGIN=http://localhost:8787
+CLOUDFLARE_CLIENT_ID=
+CLOUDFLARE_CLIENT_SECRET=
