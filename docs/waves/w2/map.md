@@ -55,7 +55,7 @@ Files: `apps/worker/src/features/intake/*.test.ts`.
 | intake-24 | `decode.test.ts`, `normalize.test.ts`, `http.test.ts` | each unreadable body: 400, nothing stored; with a registry binding that throws when touched (the health test's pattern) and `wasContacted` false |
 | intake-25 | `decode.test.ts`, `http.test.ts` | `sentLimit`; a JSON request whose Content-Length is over the cap; gzip and base64 bodies that decode over 20 MiB |
 | intake-26 | `decode.test.ts` | `decodeBody` at exactly the limit and one byte over, for `BODY_LIMITS.eventBytes` and `BODY_LIMITS.recordingBytes` |
-| intake-28 | `http.test.ts` | the registry failing (`UNMIGRATED_REGISTRY`): 503, store not contacted; the store failing (its recorded step set past the code's, as `platform/project-store.test.ts` does): 503, nothing stored; each retried once the failure is gone stores the whole batch |
+| intake-28 | `http.test.ts` | the registry failing (`UNMIGRATED_REGISTRY`): 503, store not contacted; the store failing (its recorded step set past the code's, as `apps/worker/src/platform/project-store.test.ts` does): 503, nothing stored; each retried once the failure is gone stores the whole batch |
 | intake-29 | `normalize.test.ts`, `http.test.ts` | one batch with each faulty event beside good ones |
 | intake-30 | `core.test.ts`, `http.test.ts` | `quotaKey`; a batch of only `$exception` at the cap answers `exceptionEvent` |
 | intake-31 | `uuid.test.ts`, `core.test.ts`, `http.test.ts` | `isUuid`, `uuidV7`; `prepareEvent` replaces a missing or malformed uuid; two identical events with no uuid are both stored |
@@ -157,17 +157,17 @@ Each fill worker owns these files and passes these tests. The gate is `pnpm wave
 
 | Fill | Owns | Passes | Needs first |
 |---|---|---|---|
-| f-intake | `intake/clip.ts`, `core.ts`, `decode.ts`, `normalize.ts`, `time.ts`, `uuid.ts` | `intake/{clip,core,decode,normalize,time,uuid}.test.ts` | nothing |
-| f-cookieless | `cookieless/core.ts`, `store.ts` | `cookieless/core.test.ts`, `store.test.ts` | nothing |
-| f-identity | `identity/core.ts`, `store.ts` | `identity/core.test.ts`, `store.test.ts` | nothing |
-| f-events | `events/core.ts`, `store.ts` | `events/core.test.ts`, `store.test.ts` | nothing |
-| f-ingest | `platform/ingest.ts`, and the body of `ProjectStore.ingest` in `platform/project-store.ts` | every `ingest.test.ts` of cookieless, identity and events | f-intake (for `uuidV7`), f-cookieless, f-identity, f-events |
-| f-capture | `intake/http.ts` | `intake/http.test.ts` and every `capture.test.ts` | f-intake, f-ingest |
+| f-intake | `apps/worker/src/features/intake/clip.ts`, `core.ts`, `decode.ts`, `normalize.ts`, `time.ts`, `uuid.ts` | `intake/{clip,core,decode,normalize,time,uuid}.test.ts` | nothing |
+| f-cookieless | `apps/worker/src/features/cookieless/core.ts`, `store.ts` | `apps/worker/src/features/cookieless/core.test.ts`, `store.test.ts` | nothing |
+| f-identity | `apps/worker/src/features/identity/core.ts`, `store.ts` | `apps/worker/src/features/identity/core.test.ts`, `store.test.ts` | nothing |
+| f-events | `apps/worker/src/features/events/core.ts`, `store.ts` | `apps/worker/src/features/events/core.test.ts`, `store.test.ts` | nothing |
+| f-ingest | `apps/worker/src/platform/ingest.ts`, and the body of `ProjectStore.ingest` in `apps/worker/src/platform/project-store.ts` | every `ingest.test.ts` of cookieless, identity and events | f-intake (for `uuidV7`), f-cookieless, f-identity, f-events |
+| f-capture | `apps/worker/src/features/intake/http.ts` | `apps/worker/src/features/intake/http.test.ts` and every `capture.test.ts` | f-intake, f-ingest |
 
-The first four run side by side. An `ingest.test.ts` fails until f-ingest lands, and a `capture.test.ts` or `intake/http.test.ts` until f-capture lands, so each fill's gate names only the files its own code can pass.
+The first four run side by side. An `ingest.test.ts` fails until f-ingest lands, and a `capture.test.ts` or `apps/worker/src/features/intake/http.test.ts` until f-capture lands, so each fill's gate names only the files its own code can pass.
 
 The close node then:
-- removes `apps/worker/src/platform/unbuilt.ts`, and with it `app.onError(surfaceUnbuilt)` in `apps/worker/src/index.ts`, once no marker is left;
+- removes unbuilt.ts (now gone), and with it `app.onError(surfaceUnbuilt)` in `apps/worker/src/index.ts`, once no marker is left;
 - runs `pnpm check`;
 - updates the two "Nothing yet" rows of `docs/engineering.md` for intake-07 and intake-09, which these tests now guard.
 
@@ -188,7 +188,7 @@ The close node then:
 2. Accepted. Numbers are kept as JavaScript reads them; a lossless reader is not worth its cost.
 3. Accepted.
 4. Accepted.
-5. Changed. A capture refusal answers apiError's `{code, message}`, so every path has one error shape (`intake/http.ts`). No test pinned the old body.
+5. Changed. A capture refusal answers apiError's `{code, message}`, so every path has one error shape (`apps/worker/src/features/intake/http.ts`). No test pinned the old body.
 6. Accepted, and D-22 now says so: a batch the store refuses is a value too.
-7. Added: `events/ingest.test.ts` stores a batch of 250 events and its resend, so `storedUuids` and `insertEvents` must split their statements at 100 bound parameters.
+7. Added: `apps/worker/src/features/events/ingest.test.ts` stores a batch of 250 events and its resend, so `storedUuids` and `insertEvents` must split their statements at 100 bound parameters.
 8. Accepted.

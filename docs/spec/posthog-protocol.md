@@ -4,7 +4,7 @@ Pinned sources. Every claim below was read from these commits.
 
 | Short name | Repository | Commit | Notes |
 |---|---|---|---|
-| JS | https://github.com/PostHog/posthog-js | `3deae6600373fb6a1b3e0023c28cb4fbf4c0ea27` (2026-10-19) | `packages/browser` is posthog-js 1.438.12. `packages/node` is posthog-node 5.56.2 and lives in this monorepo, so no separate node clone was needed. `packages/core` is @posthog/core 1.59.1 and holds the shared node transport. |
+| JS | https://github.com/PostHog/posthog-js | `3deae6600373fb6a1b3e0023c28cb4fbf4c0ea27` (2026-10-19) | `JS:packages/browser` is posthog-js 1.438.12. `JS:packages/node` is posthog-node 5.56.2 and lives in this monorepo, so no separate node clone was needed. `JS:packages/core` is @posthog/core 1.59.1 and holds the shared node transport. |
 | iOS | https://github.com/PostHog/posthog-ios | `ed6d2dd8b67ec9a53228a67d547b875a9d880f23` (2026-10-16) | posthog-ios 3.92.0 (`PostHog/PostHogVersion.swift:16`). |
 | PH (secondary) | https://github.com/PostHog/posthog | `edc1585d12ee9b0f22d4d76225085a3e9322248b` (master when read) | PostHog's own Rust capture service. Used only to confirm what the server does with SDK output (clock skew, cookieless, decoding). The SDK sources are the primary evidence. |
 | Docs | https://posthog.com/docs/api/capture , https://posthog.com/docs/api/flags | read 2026-10-19 | Confirmation only. |
@@ -122,7 +122,7 @@ The encoding depends on the `compression` value, which is resolved when the requ
 Rules that matter:
 
 - **Detect gzip by the two magic bytes `1f 8b`.** A browser gzip request has no `compression` param and no `Content-Encoding`. The Content-Type is `text/plain`, so a framework that decodes `text/plain` as UTF-8 text will corrupt the body. Read raw bytes.
-- `lz64` does not exist in the current client code. The only hit for `lz64` in `packages/` is a test fixture (`browser/src/__tests__/extensions/test_data/sessionrecording-utils-test-data.ts`). The PostHog docs still list `lz64` in `supportedCompression` (https://posthog.com/docs/api/flags), but the SDK enum has only `gzip-js` and `base64` (`JS:packages/core/src/types.ts:362-365`). Supporting `lz64` is not needed.
+- `lz64` does not exist in the current client code. The only hit for `lz64` in `packages/` is a test fixture (`JS:packages/browser/src/__tests__/extensions/test_data/sessionrecording-utils-test-data.ts`). The PostHog docs still list `lz64` in `supportedCompression` (https://posthog.com/docs/api/flags), but the SDK enum has only `gzip-js` and `base64` (`JS:packages/core/src/types.ts:362-365`). Supporting `lz64` is not needed.
 - The form body for `base64` is a standard (not URL-safe) base64 of UTF-8, then percent-encoded. A server that url-decodes the form gets plain base64 back.
 - If gzip fails on the device, the SDK falls back to uncompressed JSON, or to base64 for beacons (`request.ts:160-183`). So a server must accept all three on every ingest path.
 - `compression` is decided by the last remote config: `supportedCompression` containing `"gzip-js"` gives gzip; else containing `"base64"` gives base64; else **none** (`posthog-core.ts:1361-1370`). Before the first remote config arrives, the default is gzip (`:907`). The literal string must be `gzip-js`. A value of `"gzip"` (as in the PostHog docs sample) does not match, and the SDK then sends uncompressed `application/json`, which forces a CORS preflight.
@@ -298,7 +298,7 @@ A minimal server can do a simpler version of the same thing (hash of salt + IP +
 5. `_onRemoteConfig` (`posthog-core.ts:1340-1389`) sets compression and the analytics endpoint, then passes the result to every extension.
 6. Then flags: `ensureFlagsLoaded()` unless the config has `hasFeatureFlags: false` or `advanced_disable_feature_flags_on_first_load` is set (`remote-config.ts:96-102`).
 
-There is **no `/decide/` call** in this version (no source hit; only the deprecated config name `advanced_disable_decide`). The browser never sends `config=true` to `/flags`. `/flags/?v=2&config=true` is used by `packages/core` (react-native and similar), not by the browser (`JS:packages/core/src/posthog-core-stateless.ts:804`).
+There is **no `/decide/` call** in this version (no source hit; only the deprecated config name `advanced_disable_decide`). The browser never sends `config=true` to `/flags`. `/flags/?v=2&config=true` is used by `JS:packages/core` (react-native and similar), not by the browser (`JS:packages/core/src/posthog-core-stateless.ts:804`).
 
 `config.js` format. The script must assign: `window._POSTHOG_REMOTE_CONFIG = window._POSTHOG_REMOTE_CONFIG || {}; window._POSTHOG_REMOTE_CONFIG["<token>"] = { config: {...}, siteApps: [] };` (type at `JS:packages/browser/src/utils/globals.ts:55-61`; test fixture `__tests__/remote-config.test.ts:143-145,196-199`). The `config` object is the same JSON as the `/array/<token>/config` response.
 
@@ -340,7 +340,7 @@ What each key does and what happens without it:
 | Dead clicks on/off | `captureDeadClicks: true/false` | local `capture_dead_clicks` (boolean or object) wins | `extensions/dead-clicks-autocapture.ts:12-25, 42-59` |
 | Exception autocapture on/off | `autocaptureExceptions: true/false` | local `capture_exceptions` wins | `extensions/exception-autocapture/index.ts:42-57, 133-157` |
 | Suppression rules / extension errors | `errorTracking: {suppressionRules, captureExtensionExceptions}` | optional | `posthog-exceptions.ts:74-97` |
-| Web vitals on/off | `capturePerformance: {web_vitals: true, web_vitals_allowed_metrics?: [...]}` | boolean `false` turns off. Local `capture_performance.web_vitals` wins. | `extensions/web-vitals/index.ts:137-191` |
+| Web vitals on/off | `capturePerformance: {web_vitals: true, web_vitals_allowed_metrics?: [...]}` | boolean `false` turns off. Local `capture_performance.web_vitals` wins. | `JS:packages/browser/src/extensions/web-vitals/index.ts:137-191` |
 | Network timing in replay | `capturePerformance.network_timing` and `sessionRecording.networkPayloadCapture` | see 7.5 | `lazy-loaded-session-recorder.ts:813-832` |
 | Surveys on/off | `surveys: true/false/[...]` | `true` makes the SDK `GET /api/surveys/?token=...` (`posthog-surveys.ts:364`). `false` or missing: no surveys. Local `disable_surveys` also turns off. | `posthog-surveys.ts:137-162` |
 | Person profiles default | `defaultIdentifiedOnly` | present in the type; the browser applies its own `person_profiles` default (`posthog-core.ts:1379-1383`) | |
@@ -442,7 +442,7 @@ Response the browser needs:
 ```
 
 - `$snapshot_data` is an array of rrweb events. `$snapshot_bytes` is the estimated JSON size of the array (`lazy-loaded-session-recorder.ts:2383-2406`).
-- For `$snapshot`, the SDK skips the usual page, UA and persistence properties. It sets only `token`, `$config_defaults`, `distinct_id`, plus what the recorder passes (`posthog-core.ts:2181-2192`). `$snapshot_source` **is not set** by this version (no hit in `packages/browser/src`). Older web versions and mobile SDKs use it; treat it as optional.
+- For `$snapshot`, the SDK skips the usual page, UA and persistence properties. It sets only `token`, `$config_defaults`, `distinct_id`, plus what the recorder passes (`posthog-core.ts:2181-2192`). `$snapshot_source` **is not set** by this version (no hit in `JS:packages/browser/src`). Older web versions and mobile SDKs use it; treat it as optional.
 - Optional diagnostics: `$sdk_debug_replay_throttled_mutations_dropped` and similar (`:2391-2405`).
 
 ### 7.4 Batching, flush, size
@@ -553,9 +553,9 @@ element = [tag] *( "." class ) ":" *( key '="' value '"' )
 
 `$elements` (older form, an array of objects): `{tag_name, $el_text, classes, attr__*, nth_child, nth_of_type}` (`autocapture.ts:86-146`).
 
-- `$rageclick`: a `$autocapture` click that is also a rage click is followed by an extra event named `$rageclick` with the same properties (`autocapture.ts:670-678`). Rule: 3 clicks, each within 30 px (Manhattan distance to the last click) and 1000 ms of the previous one (`extensions/rageclick.ts:8-52`).
+- `$rageclick`: a `$autocapture` click that is also a rage click is followed by an extra event named `$rageclick` with the same properties (`autocapture.ts:670-678`). Rule: 3 clicks, each within 30 px (Manhattan distance to the last click) and 1000 ms of the previous one (`JS:packages/browser/src/extensions/rageclick.ts:8-52`).
 - `$dead_click` (and `$dead_swipe`): event with the element properties of `autocapture` plus `$dead_click_last_mutation_timestamp`, `$dead_click_event_timestamp`, `$dead_click_scroll_timeout`, `$dead_click_mutation_timeout`, `$dead_click_absolute_timeout`, `$dead_click_selection_changed_timeout`, `$dead_click_visibility_changed_timeout`, `$dead_click_*_delay_ms`; the event `timestamp` is the click time, so `$event_time_override_*` is set (`JS:packages/browser/src/entrypoints/dead-clicks-autocapture.ts:809-869`). Needs the script `dead-clicks-autocapture.js`.
-- `$pageview`, `$pageleave`, `$web_vitals` (properties `$web_vitals_<NAME>_value`, `$web_vitals_<NAME>_event`, `$current_url`; flushed after about 5 s, `web-vitals/index.ts:245-265`), `$exception` (`$exception_list` etc., `_batchKey: 'exceptionEvent'`, `posthog-exceptions.ts:189-194`), `$feature_flag_called`, `$groupidentify`, `$set`, `$identify`, `$create_alias`, `$snapshot`, `$$heatmap`, `$$client_ingestion_warning`, `$opt_in`. All travel as ordinary events.
+- `$pageview`, `$pageleave`, `$web_vitals` (properties `$web_vitals_<NAME>_value`, `$web_vitals_<NAME>_event`, `$current_url`; flushed after about 5 s, `JS:packages/browser/src/extensions/web-vitals/index.ts:245-265`), `$exception` (`$exception_list` etc., `_batchKey: 'exceptionEvent'`, `posthog-exceptions.ts:189-194`), `$feature_flag_called`, `$groupidentify`, `$set`, `$identify`, `$create_alias`, `$snapshot`, `$$heatmap`, `$$client_ingestion_warning`, `$opt_in`. All travel as ordinary events.
 
 ---
 
@@ -692,7 +692,7 @@ So for a macOS app a server needs `/batch`, `/flags`, `/array/<token>/config`, a
 7. **Trailing slashes.** Accept `/e` and `/e/`, `/batch` and `/batch/`, `/flags` and `/flags/`, `/s` and `/s/`. Ignore the query on `/flags` (`v=2`, optional `config=true`, `ip`, `ver`, `_`, `compression`, `retry_count`, `sent_at`).
 8. **Autocapture silently off.** Needs `autocapture_opt_out: false` in the config.
 9. **Replay needs three things:** `sessionRecording` as an object in the config, the recorder JS reachable at `/static/<version>/lazy-recorder.js` or `/static/lazy-recorder.js?v=<version>` (or a `.full` build), and `/s/` accepting arrays. Without the script the SDK only logs an error.
-10. **`/static` assets must come from the matching posthog-js version.** The SDK requests `/static/<posthog.version>/<kind>.js` first (`strict_script_versioning: 'fallback'`, `posthog-core.ts:346`) and falls back to the unversioned path. `kind` values: `recorder`, `lazy-recorder`, `dead-clicks-autocapture`, `exception-autocapture`, `web-vitals` (+ `-with-attribution`, `-soft-navs`), `surveys`, `tracing-headers`, `logs`, `conversations`, `product-tours`, `toolbar` (`utils/globals.ts:205-221`). Customers can avoid all of this with `array.full.no-external.js` / `module.full.no-external` builds and `disable_external_dependency_loading`.
+10. **`/static` assets must come from the matching posthog-js version.** The SDK requests `/static/<posthog.version>/<kind>.js` first (`strict_script_versioning: 'fallback'`, `posthog-core.ts:346`) and falls back to the unversioned path. `kind` values: `recorder`, `lazy-recorder`, `dead-clicks-autocapture`, `exception-autocapture`, `web-vitals` (+ `-with-attribution`, `-soft-navs`), `surveys`, `tracing-headers`, `logs`, `conversations`, `product-tours`, `toolbar` (`JS:packages/browser/src/utils/globals.ts:205-221`). Customers can avoid all of this with `array.full.no-external.js` / `module.full.no-external` builds and `disable_external_dependency_loading`.
 11. **Out-of-order events.** `$identify` is sent immediately while earlier anonymous events wait in the 3 s queue. Merge logic must not depend on arrival order. Use `timestamp` plus skew correction.
 12. **Body size.** Accept at least 20 MiB for events and 25 MiB for replay (PH limits). A single replay chunk can exceed 1 MiB.
 13. **Replay data format.** Keep `$snapshot_data` as received. Heavy events carry `cv: "2024-10"` and gzip-latin1 strings; do not re-encode them as UTF-8 blindly.

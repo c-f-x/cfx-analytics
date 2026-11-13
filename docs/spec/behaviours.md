@@ -576,7 +576,7 @@ One line per behaviour:
 
 ## dashboard
 
-The dashboard's own rules (D-24, D-27). The pure ones are unit tests in `apps/web/src/lib`; the screens are proved end to end against the real Worker in `apps/web/e2e`.
+The dashboard's own rules (D-24, D-27). The pure ones are unit tests in `apps/web/src/lib`; the screens are proved end to end against the real Worker in `apps/compat/dashboard.mjs`.
 
 - `dashboard-01` · given the board's address, when a search value is missing or not understood, then the board is the default: the last 7 days, compared with the 7 before, bots and the owner's own traffic left out, no filters · ours, D-24 · keep
 - `dashboard-02` · given a saved tile and the board's state, then the query sent is the tile's spec with the board's range, its filters as `eq` conditions on event properties, and its include switch; a trend takes the period's bucket size and is compared only when both the tile and the board ask · ours, D-24 · keep
