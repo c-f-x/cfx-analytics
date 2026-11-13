@@ -38,6 +38,8 @@ export const ERROR_CODES = [
   "delete_failed",
   /** A Cloudflare account other than the admin's tried to sign in (platform-47). */
   "forbidden",
+  /** The state refuses the change, such as removing an address from the setup (alerts-12). */
+  "conflict",
   /** An import row names a person or recording not imported yet (privacy-30). */
   "out_of_order",
 ] as const;

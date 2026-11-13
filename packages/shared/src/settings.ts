@@ -56,8 +56,15 @@ export const projectSettings = z.strictObject({
   autocapture_enabled: z.boolean(),
   dead_clicks_enabled: z.boolean(),
   internal_rules: z.array(internalRule).max(50),
+  /** Whether this product is in the weekly email (alerts-09, D-40). */
+  weekly_email: z.boolean(),
+  /** Confirmed addresses that do not get this product in their weekly email. */
+  email_off: z.array(z.email()).max(50),
 });
 export type ProjectSettings = z.infer<typeof projectSettings>;
+
+/** The body of adding an address to the weekly email (alerts-11). */
+export const addAddressBody = z.strictObject({ address: z.email().max(254) });
 
 /** A partial update names only the settings it changes (projects-08). */
 export const settingsUpdate = projectSettings.partial();
@@ -78,6 +85,8 @@ export const DEFAULT_SETTINGS: ProjectSettings = {
   autocapture_enabled: true,
   dead_clicks_enabled: false,
   internal_rules: [],
+  weekly_email: true,
+  email_off: [],
 };
 
 /**

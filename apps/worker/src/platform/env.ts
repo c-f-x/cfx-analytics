@@ -28,6 +28,10 @@ declare global {
       MAIL_FROM?: string;
       /** The site file's alert_addresses, as a JSON list (#23). */
       ALERT_ADDRESSES?: string;
+      /** The Cloudflare account, for its Email Routing addresses (D-40). From the site file. */
+      CLOUDFLARE_ACCOUNT_ID?: string;
+      /** A token with Email Routing Addresses Write, made by the owner (D-40). A secret. */
+      CLOUDFLARE_EMAIL_TOKEN?: string;
     }
   }
 }

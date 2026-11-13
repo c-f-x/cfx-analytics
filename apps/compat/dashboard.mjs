@@ -744,6 +744,14 @@ async function screens(page, api, shop, { acts, shoot, expectFailure }) {
     await page.goto(`${product}/settings`);
     if (!(await visible(page.getByText("What is collected")))) return "no settings sections";
     await shoot("settings");
+    // The weekly email's section (alerts-09, alerts-10): its switch, and with
+    // no Cloudflare token in a local run, the one-time setup line instead of
+    // the field that adds an address.
+    if (!(await visible(page.getByLabel("Weekly email")))) return "no weekly email switch";
+    const setupLine = page.getByText("Adding addresses needs a one-time setup step");
+    if (!(await visible(setupLine))) return "the Emails section does not say how to add addresses";
+    await setupLine.scrollIntoViewIfNeeded();
+    await shoot("settings-emails");
     return "";
   });
 

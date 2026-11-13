@@ -275,3 +275,27 @@ describe("tokens and keys", () => {
     for (const key of refused) expect(isSecretKeyShape(key)).toBe(false);
   });
 });
+
+describe("the weekly email's settings", () => {
+  it("alerts-09 · on by default with no address off, and kept through the registry's row", () => {
+    expect(DEFAULT_SETTINGS.weekly_email).toBe(true);
+    expect(DEFAULT_SETTINGS.email_off).toEqual([]);
+    const settings = {
+      ...DEFAULT_SETTINGS,
+      weekly_email: false,
+      email_off: ["partner@example.com"],
+    };
+    const row = Object.fromEntries(
+      SETTINGS_COLUMNS.map((column, i) => [column, settingsToRow(settings)[i]]),
+    );
+    const back = settingsFromRow(row);
+    expect(back).toEqual({ ok: true, value: settings });
+  });
+
+  it("alerts-09 · an address switched off must be an email address", () => {
+    const row = Object.fromEntries(
+      SETTINGS_COLUMNS.map((column, i) => [column, settingsToRow(DEFAULT_SETTINGS)[i]]),
+    );
+    expect(settingsFromRow({ ...row, email_off: '["not an address"]' }).ok).toBe(false);
+  });
+});

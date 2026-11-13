@@ -454,3 +454,18 @@ The owner added: "we have to change all reference in UI etc from cfanalytics to 
 
 **Consequences.** The site file gains `alert_addresses`. A new address works only once its owner clicks Cloudflare's verification link. `apps/worker/src/platform/mail.ts` is the one module that sends.
 
+## D-40 · Addresses for the weekly email are added in the dashboard, and confirmed by Cloudflare · accepted (2026-11-13)
+
+**Made by.** The owner: "why must emails be added by an agent? cant we just have a field with an email and an \"add\" button or something?", then, of the mockup, "it looks ok".
+
+**Context.** D-39 sent the weekly email only to the site file's `alert_addresses`. The deploy wrote them into the `send_email` binding's allowlist, so adding someone took an agent and a deploy. Cloudflare's Email Routing API adds a destination address, emails the person a link to confirm, and lists each address with the time it was verified (developers.cloudflare.com/api/resources/email_routing/subresources/addresses/, read 2026-11-13). Sending to verified addresses is free. Sending to any other address works on Workers Paid, but is metered.
+
+**Decision.**
+- Each product's Settings has an "Emails" section: the weekly email on or off, a switch per address, a field with an Add button, and remove. Adding asks Cloudflare to send the confirmation link, and the address shows "Waiting for confirmation" until then.
+- The site file's addresses stay the installation's default, and the dashboard cannot remove them. Added addresses live in the registry's `email_addresses`. Whether one is confirmed is always read from Cloudflare, never stored.
+- The binding has no allowlist, because added addresses are only known at run time. The Worker sends only to the site file's addresses and to added ones Cloudflare marks confirmed (alerts-13). So nothing goes to an unconfirmed added address, and nothing is metered.
+- The Worker reaches Cloudflare with a token that holds only Email Routing Addresses Edit, made once by the owner. It is optional: without it, the email still reaches the site file's addresses.
+- Removing an address takes it off this tool's list only. Its Cloudflare record stays, because other tools may send to it.
+
+**Consequences.** The c-f-x conventions say each alert address is in the `send_email` allowlist. Here the guard moves from the allowlist to the Worker's own recipient rule, and the family lead is told.
+

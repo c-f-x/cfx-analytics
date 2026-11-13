@@ -1,6 +1,14 @@
 import type { TopResult, TrendResult } from "@cfanalytics/shared";
 import { describe, expect, it } from "vitest";
-import { lastWeeks, type ProductWeek, productWeekOf, weeklyEmail, weekQueries } from "./core.ts";
+import {
+  lastWeeks,
+  type ProductWeek,
+  productWeekOf,
+  receives,
+  recipientsOf,
+  weeklyEmail,
+  weekQueries,
+} from "./core.ts";
 
 const ORIGIN = "https://analytics.example.com";
 
@@ -229,5 +237,26 @@ describe("productWeekOf", () => {
       rageTopPage: "/checkout",
       deadClicks: 3,
     });
+  });
+});
+
+describe("who gets the weekly email", () => {
+  it("alerts-13 · the setup's addresses, and added ones only once Cloudflare marks them confirmed", () => {
+    const to = recipientsOf(
+      ["owner@example.com"],
+      ["partner@example.com", "waiting@example.com", "owner@example.com"],
+      [
+        { email: "partner@example.com", verified: true },
+        { email: "waiting@example.com", verified: false },
+      ],
+    );
+    expect(to).toEqual(["owner@example.com", "partner@example.com"]);
+  });
+
+  it("alerts-13 · a product is in an address's email only when its weekly email is on and it does not switch that address off", () => {
+    const settings = { weekly_email: true, email_off: ["partner@example.com"] };
+    expect(receives(settings, "owner@example.com")).toBe(true);
+    expect(receives(settings, "partner@example.com")).toBe(false);
+    expect(receives({ weekly_email: false, email_off: [] }, "owner@example.com")).toBe(false);
   });
 });

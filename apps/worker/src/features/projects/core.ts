@@ -104,16 +104,10 @@ export function checkUpdate(
 
 /** A `projects` row's settings columns (integers for switches, JSON text for rules) as settings. */
 export function settingsFromRow(row: Readonly<Record<string, unknown>>): Result<ProjectSettings> {
-  let rules: unknown;
-  if (typeof row.internal_rules === "string") {
-    try {
-      rules = JSON.parse(row.internal_rules);
-    } catch {
-      return err("settings row: internal_rules is not valid JSON");
-    }
-  } else {
-    rules = row.internal_rules;
-  }
+  const rules = jsonColumn(row.internal_rules);
+  if (!rules.ok) return err("settings row: internal_rules is not valid JSON");
+  const off = jsonColumn(row.email_off);
+  if (!off.ok) return err("settings row: email_off is not valid JSON");
   const parsed = projectSettings.safeParse({
     timezone: row.timezone,
     events_retention_days: row.events_retention_days,
@@ -127,7 +121,9 @@ export function settingsFromRow(row: Readonly<Record<string, unknown>>): Result<
     heatmaps_enabled: switchOf(row.heatmaps_enabled),
     autocapture_enabled: switchOf(row.autocapture_enabled),
     dead_clicks_enabled: switchOf(row.dead_clicks_enabled),
-    internal_rules: rules,
+    internal_rules: rules.value,
+    weekly_email: switchOf(row.weekly_email),
+    email_off: off.value,
   });
   if (!parsed.success) {
     const [issue] = issuesOf(parsed.error);
@@ -152,6 +148,8 @@ export function settingsToRow(settings: ProjectSettings): (string | number)[] {
     autocapture_enabled: Number(settings.autocapture_enabled),
     dead_clicks_enabled: Number(settings.dead_clicks_enabled),
     internal_rules: JSON.stringify(settings.internal_rules),
+    weekly_email: Number(settings.weekly_email),
+    email_off: JSON.stringify(settings.email_off),
   };
   return SETTINGS_COLUMNS.map((column) => values[column]);
 }
@@ -171,7 +169,19 @@ export const SETTINGS_COLUMNS = [
   "autocapture_enabled",
   "dead_clicks_enabled",
   "internal_rules",
+  "weekly_email",
+  "email_off",
 ] as const;
+
+/** A JSON text column read back, or the value as it came when it is not text. */
+function jsonColumn(value: unknown): Result<unknown> {
+  if (typeof value !== "string") return ok(value);
+  try {
+    return ok(JSON.parse(value));
+  } catch {
+    return err("not valid JSON");
+  }
+}
 
 /** The day a key was last used, as YYYY-MM-DD in UTC; written at most once a day (projects-17). */
 export function usedDay(now: number): string {
