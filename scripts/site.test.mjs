@@ -219,7 +219,9 @@ test("the production block lists the Worker's required secrets, which Wrangler d
   const joined = joinWorker(template, read.value, "/repo/apps/worker");
   assert.deepEqual(joined.env.production.secrets, { required: ["AUTH_SECRET", "ADMIN_EMAIL"] });
   // And the real template lists exactly the secrets the Worker's Env declares.
-  const real = parse(readFileSync(new URL("../apps/worker/wrangler.jsonc", import.meta.url), "utf8"));
+  const real = parse(
+    readFileSync(new URL("../apps/worker/wrangler.jsonc", import.meta.url), "utf8"),
+  );
   assert.deepEqual(real.secrets?.required, [
     "AUTH_SECRET",
     "ADMIN_EMAIL",

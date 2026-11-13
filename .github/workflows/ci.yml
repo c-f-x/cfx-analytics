@@ -31,3 +31,7 @@ jobs:
           node-version-file: .node-version
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
+      # The c-f-x repository standard (cfx-kit, #42). The rest of its checks
+      # join here as this repository meets them.
+      - run: pnpm exec c-f-x check docs
+      - run: pnpm exec c-f-x check wrangler-config
