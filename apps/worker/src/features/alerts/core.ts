@@ -18,7 +18,6 @@ export interface Week {
   toDay: string;
 }
 
-
 /** A local date, shifted by whole days, as YYYY-MM-DD. */
 const dayString = (year: number, month: number, day: number, shift: number) =>
   new Date(Date.UTC(year, month - 1, day + shift)).toISOString().slice(0, 10);
@@ -109,7 +108,8 @@ function part(product: ProductWeek, origin: string): string {
     const where = product.rageTopPage === null ? "" : `, most on ${product.rageTopPage}`;
     problems.push(`${String(product.rageClicks)} rage clicks${where}`);
   }
-  if (product.deadClicks > 0) problems.push(`${String(product.deadClicks)} clicks that did nothing`);
+  if (product.deadClicks > 0)
+    problems.push(`${String(product.deadClicks)} clicks that did nothing`);
   if (problems.length > 0) lines.push(`Problems: ${problems.join("; ")}`);
   lines.push(`${origin}/p/${product.id}`);
   return lines.join("\n");
@@ -126,10 +126,15 @@ export function weeklyEmail(products: ProductWeek[], origin: string): WeeklyEmai
     .map((p) => p.name)
     .toSorted((a, b) => a.localeCompare(b));
   const from = active.map((p) => p.week.from).toSorted()[0] ?? "";
-  const to = active.map((p) => p.week.to).toSorted().at(-1) ?? "";
+  const to =
+    active
+      .map((p) => p.week.to)
+      .toSorted()
+      .at(-1) ?? "";
   const total = active.reduce((sum, p) => sum + p.visitors.now, 0);
   const sections = active.map((p) => part(p, origin));
-  if (quiet.length > 0) sections.push(`No visitors this week or the week before: ${quiet.join(", ")}.`);
+  if (quiet.length > 0)
+    sections.push(`No visitors this week or the week before: ${quiet.join(", ")}.`);
   return {
     subject: `Your products, ${weekLabel(from, to)}: ${String(total)} visitors`,
     text: `${sections.join("\n\n")}\n`,
@@ -137,7 +142,14 @@ export function weeklyEmail(products: ProductWeek[], origin: string): WeeklyEmai
 }
 
 /** The queries one product's week needs, by name. */
-export type WeekQueryName = "visitors" | "sessions" | "pages" | "sources" | "rage" | "ragePage" | "dead";
+export type WeekQueryName =
+  | "visitors"
+  | "sessions"
+  | "pages"
+  | "sources"
+  | "rage"
+  | "ragePage"
+  | "dead";
 
 /** Each number of a product's week, asked of the store like any dashboard question (alerts-01). */
 export function weekQueries(week: Week): Record<WeekQueryName, QuerySpec> {
@@ -197,14 +209,15 @@ const pathOf = (key: string) => {
   return slash > 0 ? key.slice(slash) : key;
 };
 
+const rows = (result: TopResult, name: (key: string | number | boolean | null) => string) =>
+  result.rows.map((row) => ({ key: name(row.key), visitors: row.count }));
+
 /** The answers read into one product's week (alerts-02, alerts-03). */
 export function productWeekOf(
   product: { id: string; name: string },
   week: Week,
   answers: WeekAnswers,
 ): ProductWeek {
-  const rows = (result: TopResult, name: (key: string | number | boolean | null) => string) =>
-    result.rows.map((row) => ({ key: name(row.key), visitors: row.count }));
   const ragePage = answers.ragePage.rows[0]?.key;
   return {
     id: product.id,

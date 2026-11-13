@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
 import type { TopResult, TrendResult } from "@cfanalytics/shared";
-import { lastWeeks, type ProductWeek, productWeekOf, weekQueries, weeklyEmail } from "./core.ts";
+import { describe, expect, it } from "vitest";
+import { lastWeeks, type ProductWeek, productWeekOf, weeklyEmail, weekQueries } from "./core.ts";
 
 const ORIGIN = "https://analytics.example.com";
 
@@ -22,8 +22,18 @@ describe("weeklyEmail", () => {
   it("alerts-01 · lists active products busiest first, each with visitors, sessions and the change", () => {
     const mail = weeklyEmail(
       [
-        week({ id: "p_docs", name: "Docs", visitors: { now: 40, before: 50 }, sessions: { now: 45, before: 45 } }),
-        week({ id: "p_shop", name: "Shop", visitors: { now: 312, before: 279 }, sessions: { now: 401, before: 418 } }),
+        week({
+          id: "p_docs",
+          name: "Docs",
+          visitors: { now: 40, before: 50 },
+          sessions: { now: 45, before: 45 },
+        }),
+        week({
+          id: "p_shop",
+          name: "Shop",
+          visitors: { now: 312, before: 279 },
+          sessions: { now: 401, before: 418 },
+        }),
       ],
       ORIGIN,
     );
@@ -71,10 +81,19 @@ describe("weeklyEmail", () => {
   it("alerts-03 · problems name the counts and the page with the most rage clicks, and none says nothing", () => {
     const text =
       weeklyEmail(
-        [week({ visitors: { now: 5, before: 1 }, rageClicks: 14, rageTopPage: "/checkout", deadClicks: 3 })],
+        [
+          week({
+            visitors: { now: 5, before: 1 },
+            rageClicks: 14,
+            rageTopPage: "/checkout",
+            deadClicks: 3,
+          }),
+        ],
         ORIGIN,
       )?.text ?? "";
-    expect(text).toContain("Problems: 14 rage clicks, most on /checkout; 3 clicks that did nothing");
+    expect(text).toContain(
+      "Problems: 14 rage clicks, most on /checkout; 3 clicks that did nothing",
+    );
     const calm = weeklyEmail([week({ visitors: { now: 5, before: 1 } })], ORIGIN)?.text ?? "";
     expect(calm).not.toContain("Problems");
   });
@@ -108,10 +127,10 @@ describe("weeklyEmail", () => {
   });
 });
 
-describe("lastWeeks", () => {
-  const iso = (ms: number) => new Date(ms).toISOString();
-  const HOUR = 3_600_000;
+const iso = (ms: number) => new Date(ms).toISOString();
+const HOUR = 3_600_000;
 
+describe("lastWeeks", () => {
   it("alerts-06 · the last whole Monday to Sunday in the product's time zone, and the week before", () => {
     // Monday 9 November 2026, 06:00 UTC, which is 07:00 in Oslo.
     const weeks = lastWeeks(Date.parse("2026-11-09T06:00:00Z"), "Europe/Oslo");
@@ -141,6 +160,15 @@ describe("lastWeeks", () => {
   });
 });
 
+const trend = (now: number, before: number): TrendResult => ({
+  buckets: [],
+  series: [{ key: null, other: false, values: [now], total: now, change: 0 }],
+  previous: { buckets: [], series: [{ key: null, other: false, values: [before], total: before }] },
+});
+const top = (rows: [string | null, number][]): TopResult => ({
+  rows: rows.map(([key, count]) => ({ key, count })),
+});
+
 describe("productWeekOf", () => {
   const WEEK = {
     from: Date.parse("2026-11-01T23:00:00Z"),
@@ -148,14 +176,6 @@ describe("productWeekOf", () => {
     fromDay: "2026-11-02",
     toDay: "2026-11-08",
   };
-  const trend = (now: number, before: number): TrendResult => ({
-    buckets: [],
-    series: [{ key: null, other: false, values: [now], total: now, change: 0 }],
-    previous: { buckets: [], series: [{ key: null, other: false, values: [before], total: before }] },
-  });
-  const top = (rows: [string | null, number][]): TopResult => ({
-    rows: rows.map(([key, count]) => ({ key, count })),
-  });
 
   it("alerts-01 · asks each number for the week, compared with the week before", () => {
     const specs = weekQueries(WEEK);
@@ -166,21 +186,32 @@ describe("productWeekOf", () => {
       range: { kind: "between", from: "2026-11-01T23:00:00.000Z", to: "2026-11-08T23:00:00.000Z" },
     });
     expect(specs.sessions).toMatchObject({ kind: "trend", measure: "sessions", compare: true });
-    expect(specs.pages).toMatchObject({ kind: "top", dimension: { builtin: "page" }, measure: "visitors", limit: 5 });
+    expect(specs.pages).toMatchObject({
+      kind: "top",
+      dimension: { builtin: "page" },
+      measure: "visitors",
+      limit: 5,
+    });
     expect(specs.rage).toMatchObject({ kind: "trend", event: "$rageclick", measure: "events" });
   });
 
   it("alerts-02, alerts-03 · reads the answers into the email's numbers", () => {
-    const week = productWeekOf({ id: "p_shop", name: "Shop" }, WEEK, {
+    const read = productWeekOf({ id: "p_shop", name: "Shop" }, WEEK, {
       visitors: trend(312, 279),
       sessions: trend(401, 418),
-      pages: top([["shop.example.com/pricing", 88], ["shop.example.com/", 60]]),
-      sources: top([[null, 120], ["news.ycombinator.com", 60]]),
+      pages: top([
+        ["shop.example.com/pricing", 88],
+        ["shop.example.com/", 60],
+      ]),
+      sources: top([
+        [null, 120],
+        ["news.ycombinator.com", 60],
+      ]),
       rage: trend(14, 2),
       ragePage: top([["shop.example.com/checkout", 11]]),
       dead: trend(3, 0),
     });
-    expect(week).toEqual({
+    expect(read).toEqual({
       id: "p_shop",
       name: "Shop",
       week: { from: "2026-11-02", to: "2026-11-08" },

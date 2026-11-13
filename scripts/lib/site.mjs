@@ -62,7 +62,8 @@ const FIELDS = [
   ["watch.to", (v) => typeof v === "string" && EMAIL.test(v), "an email address"],
   [
     "alert_addresses",
-    (v) => Array.isArray(v) && v.length > 0 && v.every((a) => typeof a === "string" && EMAIL.test(a)),
+    (v) =>
+      Array.isArray(v) && v.length > 0 && v.every((a) => typeof a === "string" && EMAIL.test(a)),
     "a list of at least one verified email address",
   ],
 ];

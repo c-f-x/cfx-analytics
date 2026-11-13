@@ -1,15 +1,15 @@
-import type { TopResult, TrendResult } from "@cfanalytics/shared";
+import type { ProjectInfo, TopResult, TrendResult } from "@cfanalytics/shared";
+import type { Hono } from "hono";
 import {
   lastWeeks,
   type ProductWeek,
   productWeekOf,
   type WeekAnswers,
-  weekQueries,
   weeklyEmail,
+  weekQueries,
 } from "../features/alerts/index.ts";
 import { listProjects } from "../features/projects/index.ts";
 import { runProjectQuery } from "../features/query/index.ts";
-import type { Hono } from "hono";
 import type { Deps } from "./deps.ts";
 import { type AppEnv, apiError, dashboardAnswer } from "./http.ts";
 import { alertAddresses, sendMail } from "./mail.ts";
@@ -32,7 +32,7 @@ export interface WeeklyRun {
   recipients: string[];
   /** The dashboard's origin, for the links. */
   origin: string;
-  send: (mail: OutgoingMail) => Promise<Result<string, string>>;
+  send: (mail: OutgoingMail) => Promise<Result<string>>;
 }
 
 export interface WeeklyOutcome {
@@ -41,26 +41,62 @@ export interface WeeklyOutcome {
   leftOut: string[];
 }
 
-const NAMES = ["visitors", "sessions", "pages", "sources", "rage", "ragePage", "dead"] as const;
+type Answered = Awaited<ReturnType<typeof runProjectQuery>>;
+
+const isTrend = (result: unknown): result is TrendResult =>
+  typeof result === "object" && result !== null && "series" in result && "buckets" in result;
+
+const isTop = (result: unknown): result is TopResult =>
+  typeof result === "object" &&
+  result !== null &&
+  "rows" in result &&
+  Array.isArray(result.rows) &&
+  result.rows.every((row: unknown) => typeof row === "object" && row !== null && "count" in row);
+
+const trendOf = (answer: Answered): TrendResult | null =>
+  answer.ok && isTrend(answer.value.result) ? answer.value.result : null;
+const topOf = (answer: Answered): TopResult | null =>
+  answer.ok && isTop(answer.value.result) ? answer.value.result : null;
 
 /** One product's week, or null when its store did not answer one of the questions. */
 async function readWeek(
   env: Cloudflare.Env,
   deps: Deps,
-  project: { id: string; name: string; settings: Parameters<typeof runProjectQuery>[2]["settings"] },
+  project: ProjectInfo,
 ): Promise<ProductWeek | null> {
   const week = lastWeeks(deps.now(), project.settings.timezone).now;
   const specs = weekQueries(week);
-  const answers = await Promise.all(
-    NAMES.map((name) => runProjectQuery(env, deps, project, specs[name])),
-  );
-  const results: Partial<Record<(typeof NAMES)[number], TrendResult | TopResult>> = {};
-  for (const [index, name] of NAMES.entries()) {
-    const answer = answers[index];
-    if (answer === undefined || !answer.ok) return null;
-    results[name] = answer.value.result as TrendResult | TopResult;
-  }
-  return productWeekOf(project, week, results as WeekAnswers);
+  const ask = (name: keyof typeof specs) => runProjectQuery(env, deps, project, specs[name]);
+  const [visitors, sessions, pages, sources, rage, ragePage, dead] = await Promise.all([
+    ask("visitors"),
+    ask("sessions"),
+    ask("pages"),
+    ask("sources"),
+    ask("rage"),
+    ask("ragePage"),
+    ask("dead"),
+  ]);
+  const answers: Record<keyof WeekAnswers, TrendResult | TopResult | null> = {
+    visitors: trendOf(visitors),
+    sessions: trendOf(sessions),
+    pages: topOf(pages),
+    sources: topOf(sources),
+    rage: trendOf(rage),
+    ragePage: topOf(ragePage),
+    dead: trendOf(dead),
+  };
+  const read = complete(answers);
+  return read === null ? null : productWeekOf(project, week, read);
+}
+
+/** The answers when every one came back in its expected shape, else null. */
+function complete(
+  answers: Record<keyof WeekAnswers, TrendResult | TopResult | null>,
+): WeekAnswers | null {
+  const { visitors, sessions, pages, sources, rage, ragePage, dead } = answers;
+  if (!isTrend(visitors) || !isTrend(sessions) || !isTop(pages) || !isTop(sources)) return null;
+  if (!isTrend(rage) || !isTop(ragePage) || !isTrend(dead)) return null;
+  return { visitors, sessions, pages, sources, rage, ragePage, dead };
 }
 
 /** Reads every product's week and sends the weekly email to each recipient. */
@@ -68,7 +104,7 @@ export async function sendWeeklyEmails(
   env: Cloudflare.Env,
   deps: Deps,
   run: WeeklyRun,
-): Promise<Result<WeeklyOutcome, string>> {
+): Promise<Result<WeeklyOutcome>> {
   if (run.recipients.length === 0) return err("no alert address: the site file lists none");
   const listed = await listProjects(env.REGISTRY);
   if (!listed.ok) return err(`the registry did not answer: ${listed.error.message}`);
@@ -102,7 +138,7 @@ export async function sendWeeklyEmails(
  * addresses, the dashboard's origin, and mail.ts. The scheduled handler runs
  * it through the kit's job, and the dashboard's "send it now" route directly.
  */
-export async function runWeekly(env: Cloudflare.Env, deps: Deps): Promise<Result<WeeklyOutcome, string>> {
+export async function runWeekly(env: Cloudflare.Env, deps: Deps): Promise<Result<WeeklyOutcome>> {
   const recipients = alertAddresses(env.ALERT_ADDRESSES);
   if (!recipients.ok) return err(recipients.error);
   return sendWeeklyEmails(env, deps, {

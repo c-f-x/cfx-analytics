@@ -194,6 +194,7 @@ test("the site check flags a site file's hostnames, addresses and ids in a file"
       r2_bucket: "analytics-recordings",
     },
     watch: { name: "w", kv_id: "b".repeat(32), from: `a${at}${REAL}`, to: `owner${at}${REAL}` },
+    alert_addresses: [`owner${at}${REAL}`],
   };
   assert.deepEqual(
     siteValueViolations(site, "docs/x.md", `the dashboard is at stats.${REAL}\nnothing here`),

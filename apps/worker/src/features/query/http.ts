@@ -7,6 +7,7 @@ import {
   type QuerySpec,
 } from "@cfanalytics/shared";
 import type { Hono } from "hono";
+import type { Deps } from "../../platform/deps.ts";
 import {
   type AppContext,
   type AppEnv,
@@ -16,7 +17,6 @@ import {
   readJsonBody,
   STORE_UNAVAILABLE,
 } from "../../platform/http.ts";
-import type { Deps } from "../../platform/deps.ts";
 import { projectStore } from "../../platform/project-store-id.ts";
 import { err, messageOf, ok, type Result } from "../../platform/result.ts";
 import { requireAdmin } from "../../platform/session.ts";

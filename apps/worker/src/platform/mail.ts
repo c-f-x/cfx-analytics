@@ -8,7 +8,7 @@ import type { OutgoingMail } from "./weekly.ts";
 // not depend on cfx-mail (#23).
 
 /** Sends one plain-text email, answering its message id or why it was refused. */
-export async function sendMail(env: Cloudflare.Env, mail: OutgoingMail): Promise<Result<string, string>> {
+export async function sendMail(env: Cloudflare.Env, mail: OutgoingMail): Promise<Result<string>> {
   const from = env.MAIL_FROM;
   if (from === undefined || from === "") return err("MAIL_FROM is not set");
   const sent = await notify(env.MAIL, {
@@ -21,7 +21,7 @@ export async function sendMail(env: Cloudflare.Env, mail: OutgoingMail): Promise
 }
 
 /** The site file's alert addresses, as the deploy writes them: a JSON list of strings. */
-export function alertAddresses(value: unknown): Result<string[], string> {
+export function alertAddresses(value: unknown): Result<string[]> {
   if (typeof value !== "string" || value === "") return err("ALERT_ADDRESSES is not set");
   let parsed: unknown;
   try {

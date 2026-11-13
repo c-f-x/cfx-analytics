@@ -68,7 +68,11 @@ async function weeklyJob(env: Cloudflare.Env): Promise<void> {
 
 // The cron trigger in wrangler.jsonc, Mondays at 06:00 UTC: the weekly email,
 // through the kit's job, so each run records its outcome (#23).
-function onCron(_controller: ScheduledController, env: Cloudflare.Env, ctx: ExecutionContext): void {
+function onCron(
+  _controller: ScheduledController,
+  env: Cloudflare.Env,
+  ctx: ExecutionContext,
+): void {
   ctx.waitUntil(job("weekly_email", () => weeklyJob(env)));
 }
 

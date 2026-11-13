@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import { captureApp, fetchApp, iso, nodeBatch, nodeRequest } from "../../test/helpers/capture.ts";
 import { seedProject } from "../../test/helpers/registry.ts";
 import { dashboardHeaders, dashboardSession } from "../../test/helpers/session.ts";
-import worker from "../index.ts";
 import { lastWeeks } from "../features/alerts/index.ts";
+import worker from "../index.ts";
 import { realDeps } from "./deps.ts";
 import { ok } from "./result.ts";
 import { type OutgoingMail, sendWeeklyEmails } from "./weekly.ts";
@@ -20,7 +20,10 @@ async function sendPageViews(token: string, people: string[]): Promise<void> {
     event: "$pageview",
     distinctId: person,
     timestamp: iso(IN_WEEK),
-    properties: { $current_url: "https://shop.example.com/pricing", $process_person_profile: false },
+    properties: {
+      $current_url: "https://shop.example.com/pricing",
+      $process_person_profile: false,
+    },
   }));
   const body = nodeBatch(token, batch, { sentAt: iso(IN_WEEK) });
   const response = await fetchApp(app, await nodeRequest(body));
@@ -35,14 +38,18 @@ describe("sendWeeklyEmails", () => {
     await sendPageViews(shop.token, ["ada", "bo", "cy"]);
 
     const sent: OutgoingMail[] = [];
-    const outcome = await sendWeeklyEmails(env, { ...realDeps(), now: () => MONDAY }, {
-      recipients: ["one@example.com", "two@example.com"],
-      origin: ORIGIN,
-      send: async (mail) => {
-        sent.push(mail);
-        return ok("message-id");
+    const outcome = await sendWeeklyEmails(
+      env,
+      { ...realDeps(), now: () => MONDAY },
+      {
+        recipients: ["one@example.com", "two@example.com"],
+        origin: ORIGIN,
+        send: async (mail) => {
+          sent.push(mail);
+          return ok("message-id");
+        },
       },
-    });
+    );
 
     expect(outcome).toEqual({ ok: true, value: { sent: 2, leftOut: [] } });
     expect(sent.map((mail) => mail.to)).toEqual(["one@example.com", "two@example.com"]);
@@ -57,14 +64,18 @@ describe("sendWeeklyEmails", () => {
 
   it("alerts-07 · with no alert address nothing is sent, and the outcome says so", async () => {
     const sent: OutgoingMail[] = [];
-    const outcome = await sendWeeklyEmails(env, { ...realDeps(), now: () => MONDAY }, {
-      recipients: [],
-      origin: ORIGIN,
-      send: async (mail) => {
-        sent.push(mail);
-        return ok("message-id");
+    const outcome = await sendWeeklyEmails(
+      env,
+      { ...realDeps(), now: () => MONDAY },
+      {
+        recipients: [],
+        origin: ORIGIN,
+        send: async (mail) => {
+          sent.push(mail);
+          return ok("message-id");
+        },
       },
-    });
+    );
     expect(outcome.ok).toBe(false);
     expect(sent).toEqual([]);
   });
@@ -122,7 +133,11 @@ describe("POST /api/emails/weekly", () => {
       configured,
     );
     expect(elsewhere.status).toBe(403);
-    const get = await fetchApp(worker, new Request(url, { headers: dashboardHeaders(session) }), configured);
+    const get = await fetchApp(
+      worker,
+      new Request(url, { headers: dashboardHeaders(session) }),
+      configured,
+    );
     expect(get.status).toBe(405);
   });
 });
