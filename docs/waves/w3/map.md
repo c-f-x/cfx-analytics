@@ -8,7 +8,7 @@ Every test goes through one of these doors. Each fails today on an `unbuilt: <na
 
 | Door | Use it for | Fails today on |
 |---|---|---|
-| A pure function's input and output | Rules in `config/core.ts`, `recordings/core.ts`, `heatmaps/core.ts`, `heatmaps/range.ts` | That function's marker |
+| A pure function's input and output | Rules in `apps/worker/src/features/config/core.ts`, `apps/worker/src/features/recordings/core.ts`, `apps/worker/src/features/heatmaps/core.ts`, and range.ts, since folded into it, | That function's marker |
 | A slice's store function inside the object: `inStore(projectId, (sql) => ...)` | One table's behaviour, such as `chunksOf`, `latestSnapshot`, `insertPoints` or `readPoints` | That function's marker |
 | Chunks straight to a store: `snapshotsDirect(snapshotRequestOf(id, [await snapshotChunk({...})]))`, or the RPC call `snapshotsRpc(...)` | The bytes cap, R2 keys and objects, chunk rows, retries. `snapshotsDirect` passes an in-flight set the test may hold; use `snapshotsRpc` for calls at once. | `unbuilt: ingest.ingestSnapshots` or `unbuilt: ProjectStore.ingestSnapshots` |
 | A batch with points: `ingestDirect(ingestRequest(id, events, { points }))` | Points stored in the batch's transaction | `unbuilt: heatmaps.insertPoints` |
@@ -157,7 +157,7 @@ Files: `apps/worker/src/features/heatmaps/*.test.ts`.
 | events-12, sweep clause | The sweep is wave 4. The recordings clause is in this wave. |
 | cookieless-04 and events-09, alarm halves | Still wave 4's alarm, as wave 2's map says. |
 
-These draft functions of `build/skeleton` serve wave 4 only, so they are not in this wave's files: in `recordings/store.ts`, `reassignPerson`, `expiredRecordings`, `recordingsOfPerson`, `deleteChunkRows`, `knownKeys`, `deleteObjects`, `orphanKeys` and `deletePrefix`; in `heatmaps/store.ts`, `prunePoints` and `erasePoints`. Wave 4's outline brings them back.
+These draft functions of `build/skeleton` serve wave 4 only, so they are not in this wave's files: in `apps/worker/src/features/recordings/store.ts`, `reassignPerson`, `expiredRecordings`, `recordingsOfPerson`, `deleteChunkRows`, `knownKeys`, `deleteObjects`, `orphanKeys` and `deletePrefix`; in `apps/worker/src/features/heatmaps/store.ts`, `prunePoints` and `erasePoints`. Wave 4's outline brings them back.
 
 ## Fill split
 
@@ -165,26 +165,26 @@ Each fill worker owns these files and passes these tests. The gate is `pnpm wave
 
 | Fill | Owns | Passes | Needs first |
 |---|---|---|---|
-| f-config | `config/core.ts`, `config/http.ts` | `config/core.test.ts`, `config/http.test.ts` | nothing |
-| f-recordings-core | `recordings/core.ts` | `recordings/core.test.ts` | nothing |
-| f-recordings-store | `recordings/store.ts` | `recordings/store.test.ts` | nothing |
-| f-heatmaps-core | `heatmaps/core.ts`, `heatmaps/range.ts` | `heatmaps/core.test.ts`, `heatmaps/range.test.ts` | nothing |
-| f-heatmaps-store | `heatmaps/store.ts` | `heatmaps/store.test.ts` | nothing |
-| f-ingest | `platform/ingest.ts` (`ingestSnapshots`), the bodies of the wave 3 calls in `platform/project-store.ts`, and `takeWholeFromCap` and `returnToCap` in `events/store.ts` | `recordings/ingest.test.ts`, `heatmaps/ingest.test.ts`, `heatmaps/capture.test.ts` | f-recordings-core (for `objectKey`), f-recordings-store, f-heatmaps-core, f-heatmaps-store |
-| f-recordings-http | `recordings/http.ts` | `recordings/http.test.ts` | f-recordings-core, f-recordings-store, f-ingest |
-| f-heatmaps-http | `heatmaps/http.ts` | `heatmaps/http.test.ts` | f-heatmaps-core, f-heatmaps-store, f-ingest |
+| f-config | `apps/worker/src/features/config/core.ts`, `apps/worker/src/features/config/http.ts` | `apps/worker/src/features/config/core.test.ts`, `apps/worker/src/features/config/http.test.ts` | nothing |
+| f-recordings-core | `apps/worker/src/features/recordings/core.ts` | `apps/worker/src/features/recordings/core.test.ts` | nothing |
+| f-recordings-store | `apps/worker/src/features/recordings/store.ts` | `apps/worker/src/features/recordings/store.test.ts` | nothing |
+| f-heatmaps-core | `apps/worker/src/features/heatmaps/core.ts`, and range.ts, since folded into it, | `apps/worker/src/features/heatmaps/core.test.ts`, and range.test.ts, since folded into it, | nothing |
+| f-heatmaps-store | `apps/worker/src/features/heatmaps/store.ts` | `apps/worker/src/features/heatmaps/store.test.ts` | nothing |
+| f-ingest | `apps/worker/src/platform/ingest.ts` (`ingestSnapshots`), the bodies of the wave 3 calls in `apps/worker/src/platform/project-store.ts`, and `takeWholeFromCap` and `returnToCap` in `apps/worker/src/features/events/store.ts` | `apps/worker/src/features/recordings/ingest.test.ts`, `apps/worker/src/features/heatmaps/ingest.test.ts`, `apps/worker/src/features/heatmaps/capture.test.ts` | f-recordings-core (for `objectKey`), f-recordings-store, f-heatmaps-core, f-heatmaps-store |
+| f-recordings-http | `apps/worker/src/features/recordings/http.ts` | `apps/worker/src/features/recordings/http.test.ts` | f-recordings-core, f-recordings-store, f-ingest |
+| f-heatmaps-http | `apps/worker/src/features/heatmaps/http.ts` | `apps/worker/src/features/heatmaps/http.test.ts` | f-heatmaps-core, f-heatmaps-store, f-ingest |
 
-The first five run side by side. `heatmaps/capture.test.ts` needs no fill of `intake/http.ts`: the capture path already hands `$$heatmap` events to `pointsFromEvent` and their points to `ingestBatch`, which calls `insertPoints`.
+The first five run side by side. `apps/worker/src/features/heatmaps/capture.test.ts` needs no fill of `apps/worker/src/features/intake/http.ts`: the capture path already hands `$$heatmap` events to `pointsFromEvent` and their points to `ingestBatch`, which calls `insertPoints`.
 
 The close node then:
-- removes `apps/worker/src/platform/unbuilt.ts`, and with it `app.onError(surfaceUnbuilt)` in `apps/worker/src/index.ts`, once no marker is left;
+- removes unbuilt.ts (now gone), and with it `app.onError(surfaceUnbuilt)` in `apps/worker/src/index.ts`, once no marker is left;
 - runs `pnpm check`;
 - updates the "Nothing yet" row of `docs/engineering.md` for a project reading another's data, which recordings-04 now guards for recordings;
 - measures the test commands again for `CLAUDE.md`.
 
 ## Questions for the audit
 
-1. **The heatmap route needs the range rules of the query slice.** A `HeatmapSpec` names a `range`, a time zone and `includeBots`, and its answer has `AnswerMeta`. Those rules (query-07, query-08, query-10 to query-14, query-36, query-37, query-40) belong to the query slice of wave 4, which no wave 3 file may import. Without them the route could not be built in this wave, and its marker would block the close. So `heatmaps/range.ts` holds `resolveRange` now, t-heatmaps proves it under the query IDs, and wave 4's query slice imports it through `heatmaps/index.ts`, or moves it to the platform folder with its tests. Either way it keeps one home.
+1. **The heatmap route needs the range rules of the query slice.** A `HeatmapSpec` names a `range`, a time zone and `includeBots`, and its answer has `AnswerMeta`. Those rules (query-07, query-08, query-10 to query-14, query-36, query-37, query-40) belong to the query slice of wave 4, which no wave 3 file may import. Without them the route could not be built in this wave, and its marker would block the close. So and range.ts, since folded into it, holds `resolveRange` now, t-heatmaps proves it under the query IDs, and wave 4's query slice imports it through `apps/worker/src/features/heatmaps/index.ts`, or moves it to the platform folder with its tests. Either way it keeps one home.
 2. **Points take nothing from a daily cap.** D-20 bounds the bill with the event and recording-bytes caps. A `$$heatmap` event makes no event row, so the contract counts it nowhere, and points can grow without a cap until the retention sweep. Counting each `$$heatmap` event against the events cap is the other choice. It would make `counters` disagree with `events` rows, which events-01 reads.
 3. **`recordings.person_id` is never written.** The list reads a recording's person through `person_distinct_ids` when it is read, so an `$identify` after the recording began counts at once (recordings-29), with no change to `ingestBatch`. Keeping the column current would need every merge and link of a batch to update recordings too, inside wave 2's built transaction. `docs/data-model.md` now says so. A later schema step may drop the column.
 4. **Active time.** recordings-05 names "active time" without a rule. The contract sums the gaps of at most 5 s (`ACTIVE_GAP_MS`) between input events inside each chunk. A gap that spans two chunks is not counted.
@@ -201,7 +201,7 @@ The close node then:
 ## Audit answers (2026-10-21)
 
 1. Accepted for this wave. Wave 4's outline moves `resolveRange` and its tests into `packages/shared`, so query and heatmaps import one home.
-2. Changed. Each `$$heatmap` event takes one from the events cap after the batch's events, so points cannot grow the bill past the cap (heatmaps-21, new). `counters` then counts every event sent, heatmap ones included, which `docs/data-model.md` now says. The contract is in `ingest.ts`, step 7, and `heatmaps/ingest.test.ts` proves it.
+2. Changed. Each `$$heatmap` event takes one from the events cap after the batch's events, so points cannot grow the bill past the cap (heatmaps-21, new). `counters` then counts every event sent, heatmap ones included, which `docs/data-model.md` now says. The contract is in `ingest.ts`, step 7, and `apps/worker/src/features/heatmaps/ingest.test.ts` proves it.
 3. Accepted. The dead `recordings.person_id` column goes in a later schema step.
 4. to 11. and 13. Accepted.
 12. Accepted, with the limit noted: an `/s/` request near 25 MiB of incompressible snapshot data could pass the 32 MiB RPC limit and answer 503. posthog-js sends chunks far smaller.

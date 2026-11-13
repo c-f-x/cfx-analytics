@@ -23,15 +23,15 @@ PostHog's protocol comes from PostHog's own MIT SDKs and docs (`docs/spec/postho
 
 | What | From | Into slice | How |
 |---|---|---|---|
-| Period, time zone and daylight-saving maths (`resolvePeriod`, `previousRange`, bucket generation) | traks `packages/shared/src/queries.ts:202-472` | `query` | Idea; written with `now` and `tz` passed in, and with daylight-saving and date-line tests of our own |
-| Comparing this period with the last in one scan, and conditional aggregation | traks `queries.ts:534-797` | `query` | Ideas only; rewrite for SQLite with bound parameters |
-| Visitor hash rotating daily, refusing an empty secret | traks `apps/platform/collect/src/index.ts:152-211` | `cookieless` | Adapt to PostHog's inputs (project, salt, IP, user agent, host) |
-| Referrer cleaner | traks `collect/src/lib/referrer.ts` | `enrich` | Idea only; written from `docs/spec/behaviours.md` (enrich-19 to enrich-22) |
-| Bot and AI-referrer lists | traks `packages/shared/src/bots.ts`, `ai-sources.ts` | `enrich` | Idea; the bots come from `isbot` (MIT), a dependency, and seven AI crawler names of our own (`apps/worker/src/features/enrich/bots.ts`) |
-| Bot classifier and its test | InsightFlare `src/lib/edge/collector/bot-protection.ts` | `enrich` | Idea; ours uses `isbot` (MIT) too |
-| Funnel planner: staged steps, conversion window, structural budgets | InsightFlare `providers/d1/internal/funnel-planner.ts` | `query` | Port the algorithm onto our `events` table; it already targets SQLite |
-| Batching with a revision check, so a late write never overwrites a newer one | InsightFlare `src/lib/edge/ingest/flush.ts`, `scheduler.ts` | `events`, `recordings` | Pattern only |
-| Architecture allowlist check | InsightFlare `scripts/check-architecture.ts` | `scripts/` | Idea; we keep fewer rules |
+| Period, time zone and daylight-saving maths (`resolvePeriod`, `previousRange`, bucket generation) | `traks:packages/shared/src/queries.ts:202-472` | `query` | Idea; written with `now` and `tz` passed in, and with daylight-saving and date-line tests of our own |
+| Comparing this period with the last in one scan, and conditional aggregation | `traks:packages/shared/src/queries.ts:534-797` | `query` | Ideas only; rewrite for SQLite with bound parameters |
+| Visitor hash rotating daily, refusing an empty secret | `traks:apps/platform/collect/src/index.ts:152-211` | `cookieless` | Adapt to PostHog's inputs (project, salt, IP, user agent, host) |
+| Referrer cleaner | `traks:apps/platform/collect/src/lib/referrer.ts` | `enrich` | Idea only; written from `docs/spec/behaviours.md` (enrich-19 to enrich-22) |
+| Bot and AI-referrer lists | `traks:packages/shared/src/bots.ts`, `traks:packages/shared/src/ai-sources.ts` | `enrich` | Idea; the bots come from `isbot` (MIT), a dependency, and seven AI crawler names of our own (`apps/worker/src/features/enrich/bots.ts`) |
+| Bot classifier and its test | `InsightFlare:src/lib/edge/collector/bot-protection.ts` | `enrich` | Idea; ours uses `isbot` (MIT) too |
+| Funnel planner: staged steps, conversion window, structural budgets | `InsightFlare:src/lib/edge/analytics/providers/d1/internal/funnel-planner.ts` | `query` | Port the algorithm onto our `events` table; it already targets SQLite |
+| Batching with a revision check, so a late write never overwrites a newer one | `InsightFlare:src/lib/edge/ingest/flush.ts`, `InsightFlare:src/lib/edge/ingest/scheduler.ts` | `events`, `recordings` | Pattern only |
+| Architecture allowlist check | `InsightFlare:scripts/check-architecture.ts` | `scripts/` | Idea; we keep fewer rules |
 | Pure SQL templates with table-driven SQL-text tests | flarelytics worker query templates | `query` | Pattern |
 
 ## Do not take

@@ -8,7 +8,7 @@ Every test goes through one of these doors. Each fails today on an `unbuilt: <na
 
 | Door | Use it for | Fails today on |
 |---|---|---|
-| A pure function's input and output | `query/range.ts`, `validate.ts`, `cursor.ts`, `budget.ts`, `compile.ts`, the kinds' answer functions, `privacy/core.ts` | That function's marker |
+| A pure function's input and output | `apps/worker/src/features/query/range.ts`, `validate.ts`, `cursor.ts`, `budget.ts`, `compile.ts`, the kinds' answer functions, `apps/worker/src/features/privacy/core.ts` | That function's marker |
 | A fragment or a compiled query run in a real store: `inStore(id, (sql) => sql.exec(...))` for a `filters.ts` fragment, `runStatements(id, compiled)` for a kind's statements | What the SQL selects and counts: filters, exclusions, dimensions, buckets, funnels, cohorts | The compiler's marker, else `unbuilt: ProjectStore.runQuery` |
 | A slice's or the platform's store function inside the object: `inStore(id, (sql, storage) => ...)` | `runCompiled`, `erasePerson`, `exportPage`, `sweep`, `purge`, `runAlarm`, with a bucket or registry the test chooses | That function's marker |
 | An RPC call: `storeOf(id).runQuery(...)`, `.erasePerson(...)`, `.exportPage(...)`, `.schedulePurge(...)`; the alarm with `runDurableObjectAlarm(storeOf(id))` from `cloudflare:test` | What the Worker's routes and Cloudflare see | `unbuilt: ProjectStore.<call>` |
@@ -193,19 +193,19 @@ Each fill worker owns these files and passes these tests. The gate is `pnpm wave
 
 | Fill | Owns | Passes | Needs first |
 |---|---|---|---|
-| f-query-core | `query/range.ts`, `filters.ts`, `validate.ts`, `cursor.ts`, `budget.ts` | `query/{range,filters,validate,cursor}.test.ts` | nothing |
-| f-query-store | `query/store.ts`, and the body of `ProjectStore.runQuery` | `query/store.test.ts` | nothing |
-| f-privacy-tables | the wave 4 functions of `events/store.ts`, `identity/store.ts`, `heatmaps/store.ts` and `recordings/store.ts`; `privacy/core.ts`; `erasePerson` and `exportPage` in `platform/ingest.ts`; the bodies of `ProjectStore.erasePerson` and `ProjectStore.exportPage` | `privacy/core.test.ts`, `privacy/ingest.test.ts` | f-query-store |
-| f-query-kinds-a | `query/trend.ts`, `top.ts`, `events-list.ts`, `properties.ts` | their four tests | f-query-core, f-query-store |
-| f-query-kinds-b | `query/funnel.ts`, `retention.ts`, `scroll.ts` | their three tests | f-query-core, f-query-store |
-| f-sweep | `platform/sweep.ts`, and the bodies of `ProjectStore.schedulePurge` and `ProjectStore.alarm` | `platform/sweep.test.ts` | f-privacy-tables |
-| f-query-http | `query/compile.ts`, `query/http.ts` | `query/{compile,http,budget}.test.ts` | f-query-core, f-query-kinds-a, f-query-kinds-b |
-| f-privacy-http | `privacy/http.ts` | `privacy/http.test.ts` | f-sweep |
+| f-query-core | `apps/worker/src/features/query/range.ts`, `filters.ts`, `validate.ts`, `cursor.ts`, `budget.ts` | `query/{range,filters,validate,cursor}.test.ts` | nothing |
+| f-query-store | `apps/worker/src/features/query/store.ts`, and the body of `ProjectStore.runQuery` | `apps/worker/src/features/query/store.test.ts` | nothing |
+| f-privacy-tables | the wave 4 functions of `apps/worker/src/features/events/store.ts`, `apps/worker/src/features/identity/store.ts`, `apps/worker/src/features/heatmaps/store.ts` and `apps/worker/src/features/recordings/store.ts`; `apps/worker/src/features/privacy/core.ts`; `erasePerson` and `exportPage` in `apps/worker/src/platform/ingest.ts`; the bodies of `ProjectStore.erasePerson` and `ProjectStore.exportPage` | `apps/worker/src/features/privacy/core.test.ts`, `apps/worker/src/features/privacy/ingest.test.ts` | f-query-store |
+| f-query-kinds-a | `apps/worker/src/features/query/trend.ts`, `top.ts`, `events-list.ts`, `properties.ts` | their four tests | f-query-core, f-query-store |
+| f-query-kinds-b | `apps/worker/src/features/query/funnel.ts`, `retention.ts`, `scroll.ts` | their three tests | f-query-core, f-query-store |
+| f-sweep | `apps/worker/src/platform/sweep.ts`, and the bodies of `ProjectStore.schedulePurge` and `ProjectStore.alarm` | `apps/worker/src/platform/sweep.test.ts` | f-privacy-tables |
+| f-query-http | `apps/worker/src/features/query/compile.ts`, `apps/worker/src/features/query/http.ts` | `query/{compile,http,budget}.test.ts` | f-query-core, f-query-kinds-a, f-query-kinds-b |
+| f-privacy-http | `apps/worker/src/features/privacy/http.ts` | `apps/worker/src/features/privacy/http.test.ts` | f-sweep |
 
 f-query-core and f-query-store run side by side, then the kinds and f-privacy-tables. `budget.test.ts` runs every kind at real size, so it passes only with f-query-http.
 
 The close node then:
-- removes `apps/worker/src/platform/unbuilt.ts`, and with it `app.onError(surfaceUnbuilt)` in `apps/worker/src/index.ts`, once no marker is left;
+- removes unbuilt.ts (now gone), and with it `app.onError(surfaceUnbuilt)` in `apps/worker/src/index.ts`, once no marker is left;
 - adds to `scripts/guard-proof.test.mjs` the checks this wave brings: the external path's secret key check (query-01, platform-09), and the Access check on the query and privacy routes (platform-07);
 - updates the row of `docs/engineering.md` for a project reading another's data, which query-01 now guards for the query routes;
 - runs `pnpm check`, and measures the test commands again for `CLAUDE.md`, the real-size budget test included.
@@ -246,9 +246,9 @@ Faults the audit fixed in the tests, each worked out by hand:
 - `filters.test.ts`: query-08 keeps the second internal event, which no rule matches.
 - `top.test.ts`: query-67's title now says what the test checks.
 - `retention.test.ts`: the empty cohort's rate, above.
-- `sweep.test.ts` and `privacy/http.test.ts`: a test's "now" is often behind the wall clock, and workerd fires an alarm set in the past at once, so the real `ProjectStore.alarm` would have run beside the test. `runAlarmAt` now reads and deletes the alarm in the same object call that set it, and answers its value. The privacy-20 route test marks its project at the wall clock.
+- `sweep.test.ts` and `apps/worker/src/features/privacy/http.test.ts`: a test's "now" is often behind the wall clock, and workerd fires an alarm set in the past at once, so the real `ProjectStore.alarm` would have run beside the test. `runAlarmAt` now reads and deletes the alarm in the same object call that set it, and answers its value. The privacy-20 route test marks its project at the wall clock.
 - `types.test.ts` tested `runCompiled`, which `store.test.ts` owns, and no fill ran it. Its test moved into `store.test.ts`.
-- `refusingDeletes`, `asRecord` and ten copies of `isRecord` each have one home now: `test/helpers/replay.ts`, `test/helpers/json.ts` and the shared `isJsonObject`.
+- `refusingDeletes`, `asRecord` and ten copies of `isRecord` each have one home now: `apps/worker/test/helpers/replay.ts`, `apps/worker/test/helpers/json.ts` and the shared `isJsonObject`.
 
 Added by the audit:
 
