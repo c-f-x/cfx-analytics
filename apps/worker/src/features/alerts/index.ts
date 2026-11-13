@@ -6,6 +6,6 @@ export {
   type Week,
   type WeekAnswers,
   type WeeklyEmail,
-  weekQueries,
   weeklyEmail,
+  weekQueries,
 } from "./core.ts";
