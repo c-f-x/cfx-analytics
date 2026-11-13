@@ -11,7 +11,7 @@ const byText = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 // and the research, donor and consumer docs describe other repos, so their
 // paths are not this repo's.
 export const CHECKED_DOCS = [
-  "CLAUDE.md",
+  "AGENTS.md",
   "README.md",
   "docs/architecture.md",
   "docs/build-plan.md",
@@ -23,7 +23,7 @@ export const CHECKED_DOCS = [
   "docs/operations.md",
 ];
 
-export const BRIEF = "CLAUDE.md";
+export const BRIEF = "AGENTS.md";
 export const BRIEF_MAX_LINES = 150;
 
 const PLANNED = " (planned)";

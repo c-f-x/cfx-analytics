@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { after, before, test } from "node:test";
+import { parse } from "jsonc-parser";
 import { openRunScope } from "./lib/run-scope.mjs";
 import {
   deploymentOfSite,
@@ -209,4 +210,23 @@ test("the site file is named after the tool, as the family's conventions say", (
   const root = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
   assert.equal(SITE_FILE, `${root.name}.jsonc`);
   assert.equal(root.name, "cfx-analytics");
+});
+
+test("the production block lists the Worker's required secrets, which Wrangler does not inherit", () => {
+  const read = siteOf(SITE);
+  assert.ok(read.ok);
+  const template = { ...TEMPLATE, secrets: { required: ["AUTH_SECRET", "ADMIN_EMAIL"] } };
+  const joined = joinWorker(template, read.value, "/repo/apps/worker");
+  assert.deepEqual(joined.env.production.secrets, { required: ["AUTH_SECRET", "ADMIN_EMAIL"] });
+  // And the real template lists exactly the secrets the Worker's Env declares.
+  const real = parse(
+    readFileSync(new URL("../apps/worker/wrangler.jsonc", import.meta.url), "utf8"),
+  );
+  assert.deepEqual(real.secrets?.required, [
+    "AUTH_SECRET",
+    "ADMIN_EMAIL",
+    "DASHBOARD_ORIGIN",
+    "CLOUDFLARE_CLIENT_ID",
+    "CLOUDFLARE_CLIENT_SECRET",
+  ]);
 });

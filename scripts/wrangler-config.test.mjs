@@ -18,6 +18,8 @@ const watchConfig = readWranglerConfig(new URL("../apps/watch/wrangler.jsonc", i
 // docs/engineering.md: no secrets or deployment values in wrangler.jsonc.
 // Settings live in the D1 registry and secrets are set with `wrangler secret
 // put`, so no block declares `vars`, and no value looks like a credential.
+// `secrets.required` lists the secrets' names, not their values, so the walk
+// skips it (cfx-kit's wrangler-config check does the same).
 const CREDENTIAL = /(secret|token|password|api[_-]?key|private[_-]?key)/i;
 
 function valuesThatBelongElsewhere(cfg) {
@@ -27,7 +29,11 @@ function valuesThatBelongElsewhere(cfg) {
   }
   const walk = (value, at) => {
     if (value && typeof value === "object") {
-      for (const [k, v] of Object.entries(value)) walk(v, at ? `${at}.${k}` : k);
+      for (const [k, v] of Object.entries(value)) {
+        const key = at ? `${at}.${k}` : k;
+        if (key.endsWith("secrets.required")) continue;
+        walk(v, key);
+      }
     } else if (typeof value === "string" && CREDENTIAL.test(at)) {
       found.push(at);
     }
@@ -37,10 +43,15 @@ function valuesThatBelongElsewhere(cfg) {
 }
 
 test("the secrets check catches values and secrets put in the config", () => {
-  const bad = { vars: { BASE: "x" }, env: { prod: { vars: {}, ACCESS_TOKEN: "abc" } } };
+  const bad = {
+    vars: { BASE: "x" },
+    secrets: { required: ["AUTH_SECRET"], AUTH_SECRET: "a-real-value" },
+    env: { prod: { vars: {}, ACCESS_TOKEN: "abc" } },
+  };
   assert.deepEqual(valuesThatBelongElsewhere(bad), [
     "top level: vars",
     "env.prod: vars",
+    "secrets.AUTH_SECRET",
     "env.prod.ACCESS_TOKEN",
   ]);
 });

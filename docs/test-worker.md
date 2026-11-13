@@ -4,7 +4,7 @@ You write the failing tests for part of a wave, before anyone writes the code (d
 
 ## Read first
 
-- `CLAUDE.md`, then `docs/engineering.md`, especially "Testing".
+- `AGENTS.md`, then `docs/engineering.md`, especially "Testing".
 - Each behaviour line your prompt names, in `docs/spec/behaviours.md`. The line is the specification. Test what it says, all of it, and nothing it does not say.
 - The source files your behaviours point at: their exported signatures and the comments above them.
 - `docs/data-model.md` when a behaviour touches a store, and `docs/spec/posthog-protocol.md` when it cites a section.

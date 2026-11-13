@@ -4,7 +4,7 @@ You are filling in part of a skeleton that Claude wrote (decision D-17, `docs/bu
 
 ## Read first
 
-- `CLAUDE.md`, then `docs/architecture.md` and `docs/engineering.md`.
+- `AGENTS.md`, then `docs/architecture.md` and `docs/engineering.md`.
 - `docs/data-model.md` when your files touch a store: a `store.ts`, a schema step, or anything that keeps, ages or deletes data. Every store says how long it keeps its data and what removes the rest.
 - `docs/decisions.md` when a choice in the skeleton looks wrong to you. Check whether a decision already explains it before you say so.
 - The line in `docs/spec/behaviours.md` for each behaviour ID your tests name.

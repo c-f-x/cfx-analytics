@@ -44,4 +44,4 @@ PostHog's protocol comes from PostHog's own MIT SDKs and docs (`docs/spec/postho
 | counterscale's query class, R2 rollup and tracker | Each project's data lives in its own store (D-3), and posthog-js is our tracker |
 | flarelytics' funnel queries | Our funnels are ordered steps within a conversion window (query-04) |
 | workers-sentinel | Error tracking is not built (D-11) |
-| Every donor's compatibility shims, demo modes and mock providers | We ship none (`CLAUDE.md`, hard rules) |
+| Every donor's compatibility shims, demo modes and mock providers | We ship none (`AGENTS.md`, hard rules) |
