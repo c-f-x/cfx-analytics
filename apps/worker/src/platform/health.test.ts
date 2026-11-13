@@ -82,3 +82,23 @@ describe("platform-14", () => {
     expect(response.headers.get("cache-control")).toBe("no-store");
   });
 });
+
+describe("platform-53", () => {
+  it("platform-53 · a mistyped region fails the health check", async () => {
+    for (const value of ["EU", "", "us"]) {
+      // A broken deploy, which the env's type rules out, so the test sets it by hand.
+      const broken: Cloudflare.Env = { ...env };
+      Reflect.set(broken, "STORE_JURISDICTION", value);
+      expect((await ask(new Request(healthz), broken)).status).toBe(503);
+      const other = await ask(new Request("https://intake.test/i/v0/e/"), broken);
+      expect(other.status).toBe(503);
+    }
+  });
+
+  it('platform-53 · "eu" and no region are both healthy', async () => {
+    expect((await ask(new Request(healthz), { ...env, STORE_JURISDICTION: "eu" })).status).toBe(
+      200,
+    );
+    expect((await ask(new Request(healthz), env)).status).toBe(200);
+  });
+});

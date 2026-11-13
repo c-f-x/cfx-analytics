@@ -86,8 +86,9 @@ export function projectStoreAddressViolations(sources) {
   for (const { file, text } of sources) {
     const code = withoutComments(text);
     if (file === PROJECT_STORE_ID) {
-      if (!/\.jurisdiction\(\s*["']eu["']\s*\)/.test(code))
-        found.push(`${rel(file)} does not use the eu jurisdiction`);
+      // The region comes from configuration, never from text in the code (D-38).
+      for (const m of code.matchAll(/\.jurisdiction\(\s*(["'`])([^"'`]*)\1\s*\)/g))
+        found.push(`${rel(file)} writes the jurisdiction "${m[2]}" into the code`);
       continue;
     }
     if (ADDRESSING.test(code)) found.push(`${rel(file)} addresses a Durable Object itself`);
@@ -171,24 +172,26 @@ export function orchestrationSqlViolations(sources) {
     .map(({ file }) => `${rel(path.resolve(ROOT, file))} runs SQL itself`);
 }
 
-// D-19: only local runs set the flag that addresses ProjectStores outside a
-// jurisdiction. Its name may appear only where it is read or set for a local
-// run, and in this check (platform-18).
-export const LOCAL_FLAG = "LOCAL_UNSCOPED_PROJECT_STORES";
-export const LOCAL_FLAG_ALLOWED = [
+// D-38: the variable that says where the stores live. The deploy sets it from
+// the site file, the Worker checks it once at its entry, and only the one
+// addressing module reads it. Its name may appear nowhere else (platform-54).
+export const REGION_VAR = "STORE_JURISDICTION";
+export const REGION_VAR_ALLOWED = [
   "apps/worker/src/platform/project-store-id.ts",
+  "apps/worker/src/platform/project-store-id.test.ts",
   "apps/worker/src/platform/env.ts",
-  "apps/worker/vitest.config.ts",
-  // The real-SDK suite starts wrangler dev, a local run (docs/engineering.md, "Real SDKs").
-  "apps/compat/wrangler.mjs",
+  "apps/worker/src/index.ts",
+  "apps/worker/src/platform/health.test.ts",
+  "scripts/lib/site.mjs",
+  "scripts/site.test.mjs",
   "scripts/lib/architecture.mjs",
   "scripts/architecture.test.mjs",
 ];
 
-export function localFlagViolations(sources) {
+export function regionVarViolations(sources) {
   return sources
     .filter(
-      ({ file, text }) => text.includes(LOCAL_FLAG) && !LOCAL_FLAG_ALLOWED.includes(rel(file)),
+      ({ file, text }) => text.includes(REGION_VAR) && !REGION_VAR_ALLOWED.includes(rel(file)),
     )
-    .map(({ file }) => `${rel(file)} names ${LOCAL_FLAG}`);
+    .map(({ file }) => `${rel(file)} names ${REGION_VAR}`);
 }

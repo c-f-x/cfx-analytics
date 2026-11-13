@@ -5,6 +5,10 @@
 {
   "account_id": "00000000000000000000000000000000", // your Cloudflare account
   "admin_email": "owner@example.com", // the one person admitted to the dashboard (D-27)
+  // Where the data is stored (D-38): "eu", or leave the line out for
+  // Cloudflare's default placement. Chosen once, when the stores are made:
+  // Cloudflare cannot move them, and the deploy stops if this disagrees.
+  "jurisdiction": "eu",
   "worker": {
     "name": "cfanalytics",
     "dashboard_host": "analytics.example.com", // the dashboard, and the commands' origin

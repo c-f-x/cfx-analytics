@@ -24,6 +24,7 @@ export const SITE_FILE = "cfx-analytics.jsonc";
  *     r2_bucket: string,
  *   },
  *   watch: { name: string, kv_id: string, from: string, to: string },
+ *   jurisdiction?: "eu",
  * }} Site
  */
 
@@ -60,6 +61,10 @@ const FIELDS = [
   ["watch.to", (v) => typeof v === "string" && EMAIL.test(v), "an email address"],
 ];
 
+// Where the installation keeps its data (cfx-kit D-11, D-38): "eu", or left
+// out for Cloudflare's default placement. It is optional, so it is not in FIELDS.
+const JURISDICTION = "jurisdiction";
+
 /** @param {unknown} root @param {string} at @returns {unknown} */
 const valueAt = (root, at) =>
   at.split(".").reduce((node, key) => (isRecord(node) ? node[key] : undefined), root);
@@ -73,9 +78,12 @@ const valueAt = (root, at) =>
 export function siteOf(raw) {
   if (!isRecord(raw)) return { ok: false, errors: ["the site file is not a JSON object"] };
   const errors = [];
-  const known = new Set(
-    FIELDS.flatMap(([at]) => at.split(".").map((_, i, parts) => parts.slice(0, i + 1).join("."))),
-  );
+  const known = new Set([
+    JURISDICTION,
+    ...FIELDS.flatMap(([at]) =>
+      at.split(".").map((_, i, parts) => parts.slice(0, i + 1).join(".")),
+    ),
+  ]);
   /** @param {Record<string, unknown>} node @param {string} prefix */
   const unknownKeys = (node, prefix) => {
     for (const [key, child] of Object.entries(node)) {
@@ -86,6 +94,9 @@ export function siteOf(raw) {
   };
   for (const [at, valid, shape] of FIELDS) {
     if (!valid(valueAt(raw, at))) errors.push(`${at} is not ${shape}`);
+  }
+  if (JURISDICTION in raw && raw[JURISDICTION] !== "eu") {
+    errors.push(`${JURISDICTION} is "eu", or left out for Cloudflare's default placement`);
   }
   unknownKeys(raw, "");
   errors.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
@@ -115,6 +126,7 @@ export function siteOf(raw) {
         from: text("watch.from"),
         to: text("watch.to"),
       },
+      ...(raw[JURISDICTION] === "eu" ? { jurisdiction: "eu" } : {}),
     },
   };
 }
@@ -151,6 +163,7 @@ export function readSite(cfxSite) {
  *   bucket: string,
  *   origin: string,
  *   adminEmail: string,
+ *   jurisdiction?: "eu",
  * }} Deployment
  */
 
@@ -169,6 +182,7 @@ export function deploymentOfSite(site) {
     bucket: site.worker.r2_bucket,
     origin: `https://${site.worker.dashboard_host}`,
     adminEmail: site.admin_email,
+    ...(site.jurisdiction === undefined ? {} : { jurisdiction: site.jurisdiction }),
   };
 }
 
@@ -223,8 +237,16 @@ export function joinWorker(template, site, dir) {
         durable_objects: base.durable_objects,
         migrations: base.migrations,
         r2_buckets: [
-          { binding: "RECORDINGS", bucket_name: site.worker.r2_bucket, jurisdiction: "eu" },
+          {
+            binding: "RECORDINGS",
+            bucket_name: site.worker.r2_bucket,
+            ...(site.jurisdiction === undefined ? {} : { jurisdiction: site.jurisdiction }),
+          },
         ],
+        // The one place the Worker learns where its stores are (platform-52).
+        ...(site.jurisdiction === undefined
+          ? {}
+          : { vars: { STORE_JURISDICTION: site.jurisdiction } }),
         assets: base.assets,
       },
     },

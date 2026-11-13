@@ -1,6 +1,6 @@
 # cfx-analytics
 
-**Product analytics that runs in your own Cloudflare account.** Your sites and apps send events with PostHog's own SDKs, unchanged. cfx-analytics stores them in the EU, records sessions, draws heatmaps and answers questions from one dashboard.
+**Product analytics that runs in your own Cloudflare account.** Your sites and apps send events with PostHog's own SDKs, unchanged. cfx-analytics stores them where you choose, in the EU or Cloudflare's default placement, records sessions, draws heatmaps and answers questions from one dashboard.
 
 Moving a product over is a change of host:
 
@@ -28,8 +28,8 @@ cfx-analytics is part of [c-f-x](https://github.com/c-f-x), a family of self-hos
 - **Counts visits and events.** It accepts what posthog-js, posthog-node and posthog-ios send, on the paths they send to: `/e/`, `/i/v0/e/`, `/batch/`, `/s/`, `/flags/` and `/array/<token>/config`. A real-SDK suite (`pnpm compat`) runs all three against the Worker.
 - **Counts without storing anything on the device.** A cookieless visit gets a server-made id from a salt that is deleted each day.
 - **Answers the usual questions.** Trends with breakdowns and a comparison period, top pages, sources, countries and devices, ordered funnels, retention and scroll depth. A visitor is the person when known, else the anonymous id, so anonymous visitors count too.
-- **Records sessions and draws heatmaps.** Recordings go to an R2 bucket in the EU and play back in the dashboard with rrweb. Clicks, rage clicks and dead clicks are drawn over a recorded snapshot of the page.
-- **Keeps data in the EU for a set time.** Each product has its own SQLite Durable Object in Cloudflare's EU jurisdiction. Events, recordings and heatmap points each have a retention period, and a daily sweep removes what is older. A person can be erased on request, and a product's data exported.
+- **Records sessions and draws heatmaps.** Recordings go to an R2 bucket and play back in the dashboard with rrweb. Clicks, rage clicks and dead clicks are drawn over a recorded snapshot of the page.
+- **Keeps data where you choose, for a set time.** Each product has its own SQLite Durable Object, in the EU jurisdiction or Cloudflare's default placement, as your site file says. Events, recordings and heatmap points each have a retention period, and a daily sweep removes what is older. A person can be erased on request, and a product's data exported.
 - **Leaves out bots and your own traffic.** Known bots and AI crawlers are marked, and rules you set mark your own visits. Both are left out of every answer unless you ask for them.
 
 ## What it does not do
@@ -43,7 +43,7 @@ One Worker holds the intake, the query API and the dashboard. A small D1 databas
 | Part | Choice |
 |---|---|
 | Runtime | Cloudflare Workers |
-| Storage | One SQLite Durable Object per product, R2 for recordings, D1 for the product list, all in the EU |
+| Storage | One SQLite Durable Object per product, R2 for recordings, D1 for the product list, all in the region you choose |
 | API | Hono |
 | Dashboard | React, Vite, Tailwind, Base UI, TanStack Router and Query |
 | Tooling | pnpm, TypeScript, Biome, oxlint, Vitest on the real Workers runtime |
@@ -52,7 +52,7 @@ One Worker holds the intake, the query API and the dashboard. A small D1 databas
 
 You need a Cloudflare account on Workers Paid, a zone for the dashboard's host, and Node 24 or later.
 
-1. Create the resources `docs/operations.md` lists: the D1 database and R2 bucket in the EU jurisdiction, the bucket's lifecycle rule, the watcher's KV namespace and a private OAuth client for sign-in. There is no install command yet.
+1. Create the resources `docs/operations.md` lists: the D1 database and R2 bucket, in the EU jurisdiction if you want your data there (Cloudflare cannot move it later), the bucket's lifecycle rule, the watcher's KV namespace and a private OAuth client for sign-in. There is no install command yet.
 2. Copy `site.example.jsonc` to `cfx-analytics.jsonc` in a private folder outside this repository, and fill in your account id, hostnames, resource ids and addresses. Point `CFX_SITE` at that folder.
 3. Deploy. Every command prints its plan and how to undo each step, and changes nothing without `--go`:
 

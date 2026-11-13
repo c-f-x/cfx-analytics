@@ -1,0 +1,6 @@
+{
+  "worker": "apps/worker",
+  "sources": ["apps/worker/src", "apps/web/src", "apps/watch/src", "packages/shared/src"],
+  "slices": ["apps/worker/src/features"],
+  "migrations": ["apps/worker/migrations", "apps/worker/src/platform/schema"]
+}

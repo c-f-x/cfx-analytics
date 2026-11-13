@@ -30,8 +30,7 @@
   "r2_buckets": [
     {
       "binding": "RECORDINGS",
-      "bucket_name": "cfanalytics-recordings-local",
-      "jurisdiction": "eu"
+      "bucket_name": "cfanalytics-recordings-local"
     }
   ],
   // The pinned posthog-js lazy scripts (D-15), copied byte for byte by
