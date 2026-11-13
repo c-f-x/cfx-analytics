@@ -6,8 +6,10 @@ import {
   buildDigest,
   deploySteps,
   healthVerdict,
+  jurisdictionArgs,
   planText,
   REGISTRY_TABLES,
+  regionProblem,
   sessionToken,
 } from "./lib/ops.mjs";
 import { openRunScope } from "./lib/run-scope.mjs";
@@ -159,4 +161,21 @@ test("the backup's registry tables are the ones the migrations make, products fi
     .map((match) => match[1]);
   assert.deepEqual([...REGISTRY_TABLES].toSorted(), made.toSorted());
   assert.equal(REGISTRY_TABLES[0], "projects");
+});
+
+test("ops-03 · a deploy stops when the site's region and its bucket's place differ", () => {
+  const eu = { bucket: "analytics-recordings", jurisdiction: /** @type {"eu"} */ ("eu") };
+  const plain = { bucket: "analytics-recordings" };
+  assert.deepEqual(jurisdictionArgs(eu), ["--jurisdiction", "eu"]);
+  assert.deepEqual(jurisdictionArgs(plain), []);
+  assert.equal(regionProblem(eu, { found: true, output: "" }), null);
+  assert.equal(regionProblem(plain, { found: true, output: "" }), null);
+  const lost = regionProblem(plain, {
+    found: false,
+    output: "The specified bucket does not exist.",
+  });
+  assert.match(lost ?? "", /Cloudflare's default placement/);
+  assert.match(lost ?? "", /analytics-recordings/);
+  assert.match(lost ?? "", /does not exist/);
+  assert.match(regionProblem(eu, { found: false, output: "" }) ?? "", /the eu jurisdiction/);
 });

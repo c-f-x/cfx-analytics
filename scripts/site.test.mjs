@@ -125,13 +125,38 @@ test("the worker's config is the template's, with production built from the site
     ],
     durable_objects: TEMPLATE.durable_objects,
     migrations: TEMPLATE.migrations,
-    r2_buckets: [
-      { binding: "RECORDINGS", bucket_name: "analytics-recordings", jurisdiction: "eu" },
-    ],
+    r2_buckets: [{ binding: "RECORDINGS", bucket_name: "analytics-recordings" }],
     assets: { directory: "/repo/apps/worker/assets", binding: "ASSETS", run_worker_first: true },
   });
   // The template itself is left as it was.
   assert.equal(TEMPLATE.main, "src/index.ts");
+});
+
+test("ops-04 · a site in the eu binds its bucket there and tells the Worker where its stores are", () => {
+  const read = siteOf({ ...SITE, jurisdiction: "eu" });
+  assert.ok(read.ok);
+  const production = joinWorker(TEMPLATE, read.value, "/repo/apps/worker").env.production;
+  assert.deepEqual(production.r2_buckets, [
+    { binding: "RECORDINGS", bucket_name: "analytics-recordings", jurisdiction: "eu" },
+  ]);
+  assert.deepEqual(production.vars, { STORE_JURISDICTION: "eu" });
+  // With no region, the Worker gets no variable, and its stores take the default placement.
+  const plain = siteOf(SITE);
+  assert.ok(plain.ok);
+  assert.equal(
+    joinWorker(TEMPLATE, plain.value, "/repo/apps/worker").env.production.vars,
+    undefined,
+  );
+});
+
+test("ops-04 · a region other than eu is refused when the site file is read", () => {
+  for (const jurisdiction of ["us", "EU", "", "fedramp"]) {
+    const read = siteOf({ ...SITE, jurisdiction });
+    assert.equal(read.ok, false);
+    assert.deepEqual(read.ok ? [] : read.errors, [
+      'jurisdiction is "eu", or left out for Cloudflare\'s default placement',
+    ]);
+  }
 });
 
 test("the watcher's config takes its account, addresses and store from the site file", () => {

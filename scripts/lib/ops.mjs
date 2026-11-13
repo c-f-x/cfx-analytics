@@ -169,3 +169,37 @@ export function sessionToken(secret, payload) {
   const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
   return `${body}.${createHmac("sha256", secret).update(body).digest("base64url")}`;
 }
+
+// ── Where the stores live (D-38) ────────────────────────────────────────────
+
+/**
+ * The wrangler arguments that name a deployment's region, for the commands
+ * that address its bucket. None for Cloudflare's default placement.
+ * @param {{ bucket?: string, jurisdiction?: "eu" }} deployment
+ * @returns {string[]}
+ */
+export function jurisdictionArgs(deployment) {
+  return deployment.jurisdiction === undefined ? [] : ["--jurisdiction", deployment.jurisdiction];
+}
+
+/**
+ * Why a deploy must stop before it changes anything, or null when the site's
+ * region is where its bucket really is (ops-03). Cloudflare cannot move a
+ * store, so a site file that names the wrong region would point the Worker at
+ * new, empty stores.
+ * @param {{ bucket: string, jurisdiction?: "eu" }} deployment
+ * @param {{ found: boolean, output: string }} lookup the bucket asked for in the site's region
+ * @returns {string | null}
+ */
+export function regionProblem(deployment, lookup) {
+  if (lookup.found) return null;
+  const where =
+    deployment.jurisdiction === undefined
+      ? "Cloudflare's default placement"
+      : `the ${deployment.jurisdiction} jurisdiction`;
+  return [
+    `The site file says the stores are in ${where}, but the bucket ${deployment.bucket} was not found there.`,
+    "A deployment keeps the region it was made in (D-38): set the site file's jurisdiction to where its stores are.",
+    `Wrangler said: ${lookup.output.trim() || "nothing"}`,
+  ].join("\n");
+}

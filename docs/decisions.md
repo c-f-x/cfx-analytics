@@ -417,3 +417,17 @@ The owner added: "we have to change all reference in UI etc from cfanalytics to 
 
 **Consequences.** Merged work reaches production without waiting for the owner. A failed smoke test is the lead's to undo, with the undo line the plan printed.
 
+## D-38 · Each installation chooses where its data is stored · accepted (2026-11-13), supersedes D-19 and the EU-only rule of D-3 and D-32
+
+**Made by.** The owner, for the c-f-x family: "we cant really limit data just to EU - we might have US users using our tools etc.... so Im not sure why that is a 'thing' really?" (cfx-kit D-11). The every-store-in-the-EU rule had been an agent's proposal. Applied here by the lead (#42).
+
+**Context.** Every store was in the EU: `project-store-id.ts` wrote `jurisdiction("eu")` into the code, the tracked `wrangler.jsonc` bound the bucket in `eu`, and the backup and restore commands passed `--jurisdiction eu`. D-19 added a flag for local runs, which cannot use jurisdictions, so that a deploy with no flag landed in the EU.
+
+**Decision.**
+- The site file's optional `jurisdiction` is `"eu"`, or left out for Cloudflare's default placement. The deploy joins it into the bucket's binding and into the Worker's `STORE_JURISDICTION`. Nothing tracked names a region (`scripts/wrangler-config.test.mjs`, `scripts/architecture.test.mjs`).
+- `project-store-id.ts` addresses the stores in that region, or in the plain namespace when it is unset, as in local runs. The D-19 flag is gone.
+- A `STORE_JURISDICTION` that is no region refuses every request, `/healthz` included (platform-53).
+- D-19 had a safety property: a deploy with no flag still landed in the EU. That is replaced by a check on the real thing. Before any step, the deploy looks for the site's bucket in the site's region and stops when it is not there (ops-03). So a site file that forgets `"eu"` cannot point the Worker at new, empty stores.
+
+**Consequences.** The owner's deployment was made in the EU and stays there: its site file says `"eu"`. An installer who leaves it out gets Cloudflare's default placement. The README and the docs say the installer chooses.
+

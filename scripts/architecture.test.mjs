@@ -4,13 +4,13 @@ import path from "node:path";
 import { test } from "node:test";
 import {
   crossSliceViolations,
-  localFlagViolations,
   moduleStateViolations,
   orchestrationImportViolations,
   orchestrationSqlViolations,
   PROJECT_STORE_ID,
   projectStoreAddressViolations,
   pureFileViolations,
+  regionVarViolations,
   unbuiltViolations,
   WEB_SRC,
   WORKER_SRC,
@@ -107,14 +107,18 @@ test("the addressing check flags a Durable Object addressed outside its one home
       file: PROJECT_STORE_ID,
       text: 'export const id = (ns, p) => ns.jurisdiction("eu").idFromName(p);',
     },
+    {
+      file: PROJECT_STORE_ID,
+      text: "export const id = (ns, env, p) => ns.jurisdiction(env.REGION).idFromName(p);",
+    },
   ]);
   assert.deepEqual(found, [
-    "apps/worker/src/platform/project-store-id.ts does not use the eu jurisdiction",
     "apps/worker/src/features/intake/http.ts addresses a Durable Object itself",
+    'apps/worker/src/platform/project-store-id.ts writes the jurisdiction "eu" into the code',
   ]);
 });
 
-test("a ProjectStore is addressed only by project-store-id.ts, in the EU", () => {
+test("a ProjectStore is addressed only by project-store-id.ts, with its region from configuration", () => {
   assert.deepEqual(projectStoreAddressViolations(worker), []);
 });
 
@@ -228,21 +232,19 @@ function everyFile(dir, out = []) {
   return out;
 }
 
-test("the local-flag check flags the flag's name outside its allowed files (platform-18)", () => {
-  // Built from parts, so this file never names the flag itself.
-  const flag = ["LOCAL_UNSCOPED", "PROJECT_STORES"].join("_");
-  const found = localFlagViolations([
-    sample("apps/worker/src/features/intake/http.ts", `if (env.${flag}) {}`),
-    sample("apps/worker/wrangler.jsonc", `"vars": { "${flag}": "1" }`),
-    sample("apps/worker/src/platform/project-store-id.ts", `env.${flag}`),
+test("platform-54 · the region variable's check flags its name outside its allowed files", () => {
+  const found = regionVarViolations([
+    sample("apps/worker/src/features/intake/http.ts", "if (env.STORE_JURISDICTION) {}"),
+    sample("apps/worker/wrangler.jsonc", '"vars": { "STORE_JURISDICTION": "eu" }'),
+    sample("apps/worker/src/platform/project-store-id.ts", "env.STORE_JURISDICTION"),
   ]);
   assert.deepEqual(found, [
-    `apps/worker/src/features/intake/http.ts names ${flag}`,
-    `apps/worker/wrangler.jsonc names ${flag}`,
+    "apps/worker/src/features/intake/http.ts names STORE_JURISDICTION",
+    "apps/worker/wrangler.jsonc names STORE_JURISDICTION",
   ]);
 });
 
-test("platform-18 · the local flag's name appears only in the files allowed to read it", () => {
+test("platform-54 · the region variable appears only in the files allowed to name it", () => {
   const files = ["apps", "packages", "scripts"].flatMap((d) => everyFile(path.join(ROOT, d)));
-  assert.deepEqual(localFlagViolations(readSources(files)), []);
+  assert.deepEqual(regionVarViolations(readSources(files)), []);
 });

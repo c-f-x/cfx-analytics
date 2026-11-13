@@ -20,8 +20,8 @@ declare global {
       CLOUDFLARE_CLIENT_SECRET?: string;
       /** The dashboard's own origin, for the same-origin check on state changes (projects-26). */
       DASHBOARD_ORIGIN: string;
-      /** "1" only in local runs, which cannot use jurisdictions (D-19). */
-      LOCAL_UNSCOPED_PROJECT_STORES?: string;
+      /** Where the stores live, from the site file's jurisdiction; unset for the default placement (D-38). */
+      STORE_JURISDICTION?: "eu";
     }
   }
 }

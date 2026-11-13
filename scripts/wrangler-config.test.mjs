@@ -50,28 +50,31 @@ test("wrangler.jsonc holds no secrets or deployment values", () => {
   assert.deepEqual(valuesThatBelongElsewhere(watchConfig), []);
 });
 
-// docs/architecture.md: recordings stay in the EU. Every R2 bucket, in every
-// block, is bound in the "eu" jurisdiction.
-function bucketsOutsideEu(cfg) {
+// D-38 (cfx-kit D-11): where the data lives is each installation's choice, in
+// its site file. The tracked config names no jurisdiction, in any block; the
+// deploy joins the site's region into the config it generates.
+function bucketsWithJurisdiction(cfg) {
   const found = [];
   for (const [name, block] of configBlocks(cfg)) {
     for (const bucket of block.r2_buckets ?? []) {
-      if (bucket.jurisdiction !== "eu") found.push(`${name}: ${bucket.binding}`);
+      if (bucket.jurisdiction !== undefined) found.push(`${name}: ${bucket.binding}`);
     }
   }
   return found;
 }
 
-test("the EU check catches a bucket bound outside the EU", () => {
+test("the region check catches a bucket bound to a written jurisdiction", () => {
   const bad = {
-    r2_buckets: [{ binding: "RECORDINGS", bucket_name: "a", jurisdiction: "eu" }],
-    env: { prod: { r2_buckets: [{ binding: "RECORDINGS", bucket_name: "b" }] } },
+    r2_buckets: [{ binding: "RECORDINGS", bucket_name: "a" }],
+    env: {
+      prod: { r2_buckets: [{ binding: "RECORDINGS", bucket_name: "b", jurisdiction: "eu" }] },
+    },
   };
-  assert.deepEqual(bucketsOutsideEu(bad), ["env.prod: RECORDINGS"]);
+  assert.deepEqual(bucketsWithJurisdiction(bad), ["env.prod: RECORDINGS"]);
 });
 
-test("every R2 bucket is bound in the EU jurisdiction", () => {
-  assert.deepEqual(bucketsOutsideEu(config), []);
+test("no R2 bucket in the tracked config names a jurisdiction", () => {
+  assert.deepEqual(bucketsWithJurisdiction(config), []);
 });
 
 test("development secrets in .dev.vars stay out of git", () => {

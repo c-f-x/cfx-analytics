@@ -1,12 +1,16 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
-import { isLocalUnscoped, projectStore, projectStoreName } from "./project-store-id.ts";
+import { projectStore, projectStoreName, storeJurisdiction } from "./project-store-id.ts";
 
-describe("isLocalUnscoped", () => {
-  it('platform-16 · only the string "1" turns the local flag on', () => {
-    expect(isLocalUnscoped("1")).toBe(true);
-    for (const value of [undefined, null, "", "true", "0", " 1", "11", 1, true]) {
-      expect(isLocalUnscoped(value)).toBe(false);
+describe("storeJurisdiction", () => {
+  it('platform-52 · "eu" addresses the eu jurisdiction, and no value the default placement', () => {
+    expect(storeJurisdiction("eu")).toEqual({ ok: true, value: "eu" });
+    expect(storeJurisdiction(undefined)).toEqual({ ok: true, value: undefined });
+  });
+
+  it("platform-53 · any other value is no region at all", () => {
+    for (const value of ["EU", "", " eu", "us", "fedramp", 1, null, true]) {
+      expect(storeJurisdiction(value).ok).toBe(false);
     }
   });
 });

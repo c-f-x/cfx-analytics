@@ -8,11 +8,11 @@ Every store the deployment binds and every table the schema steps make has one r
 
 | Store | Holds | Lifetime | Removed by |
 |---|---|---|---|
-| `REGISTRY` | The D1 registry, in the EU jurisdiction: the tables `projects`, `secret_keys` and `board_tiles` below | As long as the deployment runs; each table's rows by its own rule | Deleting the database (`docs/operations.md`) |
+| `REGISTRY` | The D1 registry, in the installation's region (D-38): the tables `projects`, `secret_keys` and `board_tiles` below | As long as the deployment runs; each table's rows by its own rule | Deleting the database (`docs/operations.md`) |
 | `projects` | One row per project: name, public token, time zone, settings | Until the project is deleted, then until its data is purged | `privacy` purge, after the ProjectStore and R2 prefix are empty |
 | `secret_keys` | Hash, label, created and last-used dates of each project secret key | Until revoked or the project is deleted | `projects` on revoke; `privacy` purge |
 | `board_tiles` | Each project's board: saved questions in position order, each a query spec without range or time zone, and whether it is a standard tile (D-24); a standard tile asked a new question becomes the board's own (projects-45) | Until removed from the board, or the project is deleted, then until its data is purged; at most 40 a project | `projects` on remove; `privacy` purge, in the batch that removes the project's rows |
-| `ProjectStore` | One SQLite Durable Object per product, in the EU jurisdiction: the tables `store_meta` to `counters` below | Until its product is deleted, then until the purge | The purge deletes the whole object's storage (privacy-03) |
+| `ProjectStore` | One SQLite Durable Object per product, in the installation's region (D-38): the tables `store_meta` to `counters` below | Until its product is deleted, then until the purge | The purge deletes the whole object's storage (privacy-03) |
 | `store_meta` | The schema step runner's record: the last step applied and the product's id | As long as its ProjectStore | The purge, with the rest of the object |
 | `events` | One row per event | The project's `events_retention_days`, 395 by default, counted by event time. Intake drops an event already older than that. | Daily alarm |
 | `persons` | One row per identified person, with properties | Until the person has no events and no recordings left | Daily alarm; deletion by person |
@@ -23,7 +23,7 @@ Every store the deployment binds and every table the schema steps make has one r
 | `recording_chunks` | One row per chunk object in R2 | Same as its recording | Same as its recording |
 | `heatmap_points` | One row per click, rage click or dead click point. A `$$heatmap` event is kept only as its points (D-20). | The project's `heatmaps_retention_days`, 90 by default | Daily alarm; deletion by person |
 | `counters` | Events and recording bytes taken today, for the daily caps. The events count includes `$$heatmap` events, which make points, not event rows (heatmaps-21) | Two days | Daily alarm |
-| `RECORDINGS` | The R2 bucket, in the EU jurisdiction: gzip NDJSON chunk bodies | Same as their `recording_chunks` row | Daily alarm deletes the objects first, then the rows. The same sweep removes orphan objects with no row. A bucket lifecycle rule deletes any object older than 400 days as a backstop. |
+| `RECORDINGS` | The R2 bucket, in the installation's region (D-38): gzip NDJSON chunk bodies | Same as their `recording_chunks` row | Daily alarm deletes the objects first, then the rows. The same sweep removes orphan objects with no row. A bucket lifecycle rule deletes any object older than 400 days as a backstop. |
 | `STATE` | The watcher's KV namespace: its last check, in one key (D-30) | Overwritten by each check, every five minutes | The next check; removed with the namespace |
 
 ## Copies outside the stores

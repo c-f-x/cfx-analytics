@@ -7,7 +7,15 @@ import path from "node:path";
 import { IMPORT_LINES_MAX } from "../packages/shared/src/limits.ts";
 import { EXPORT_TABLES, IMPORT_ORDER } from "../packages/shared/src/privacy.ts";
 import { dashboardApi, keychainService } from "./lib/dashboard-api.mjs";
-import { buildDigest, deploySteps, healthVerdict, planText, REGISTRY_TABLES } from "./lib/ops.mjs";
+import {
+  buildDigest,
+  deploySteps,
+  healthVerdict,
+  jurisdictionArgs,
+  planText,
+  REGISTRY_TABLES,
+  regionProblem,
+} from "./lib/ops.mjs";
 import { openRunScope } from "./lib/run-scope.mjs";
 import { deploymentOfSite, joinWatch, joinWorker, readSite } from "./lib/site.mjs";
 import { ROOT } from "./lib/source.mjs";
@@ -144,6 +152,16 @@ async function deploy(args) {
     console.log("Note: the working tree has changes; --go refuses to deploy them.\n");
   if (go && !isClean())
     fail("The working tree has uncommitted changes. Deploy a commit, so the deploy can be traced.");
+
+  // The stores are where the site file says, before anything else is read or
+  // changed: a wrong region would point the Worker at new, empty stores (ops-03).
+  const lookup = wrangler(
+    deployment,
+    ["r2", "bucket", "info", deployment.bucket, ...jurisdictionArgs(deployment), "--json"],
+    { quiet: true },
+  );
+  const misplaced = regionProblem(deployment, { found: lookup.code === 0, output: lookup.output });
+  if (misplaced !== null) fail(misplaced);
 
   // The undo points are read before anything changes, and they only read.
   const info = wrangler(deployment, ["d1", "time-travel", "info", deployment.database, "--json"], {
@@ -555,8 +573,7 @@ async function backup(args) {
         "get",
         `${deployment.bucket}/${key}`,
         "--remote",
-        "--jurisdiction",
-        "eu",
+        ...jurisdictionArgs(deployment),
         "--file",
         file,
       ],
@@ -705,8 +722,7 @@ async function restore(args) {
         "put",
         `${deployment.bucket}/${key}`,
         "--remote",
-        "--jurisdiction",
-        "eu",
+        ...jurisdictionArgs(deployment),
         "--file",
         file,
       ],

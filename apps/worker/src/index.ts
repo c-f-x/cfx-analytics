@@ -10,6 +10,7 @@ import { mountDashboard } from "./platform/dashboard.ts";
 import { realDeps } from "./platform/deps.ts";
 import { mountHealth } from "./platform/health.ts";
 import { type AppEnv, apiError } from "./platform/http.ts";
+import { storeJurisdiction } from "./platform/project-store-id.ts";
 import { requireAdmin } from "./platform/session.ts";
 import { mountSignIn } from "./platform/sign-in.ts";
 
@@ -25,6 +26,20 @@ const app = new Hono<AppEnv>();
 app.use("*", async (c, next) => {
   c.set("deps", realDeps());
   await next();
+});
+
+// A region that is no region means a broken deploy. Every request is refused,
+// /healthz included, before anything could address a store (platform-53).
+app.use("*", async (c, next) => {
+  const region = storeJurisdiction(c.env.STORE_JURISDICTION);
+  if (!region.ok) {
+    c.get("deps").log.error("store_jurisdiction_invalid", { message: region.error });
+    return c.req.path === "/healthz"
+      ? c.json({ ok: false }, 503, { "cache-control": "no-store" })
+      : apiError(503, "unavailable", "This deployment is misconfigured.");
+  }
+  await next();
+  return undefined;
 });
 
 mountHealth(app);

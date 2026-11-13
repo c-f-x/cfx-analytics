@@ -100,8 +100,6 @@ export async function startDev({ root, scope, stateDir, vars }) {
       String(inspectorPort),
       "--persist-to",
       stateDir,
-      "--var",
-      "LOCAL_UNSCOPED_PROJECT_STORES:1",
       ...extra,
     ],
     {

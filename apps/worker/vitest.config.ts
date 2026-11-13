@@ -12,12 +12,11 @@ export default defineConfig({
       wrangler: { configPath: "./wrangler.jsonc" },
       remoteBindings: false,
       miniflare: {
-        // Local values of the deployment's secrets, and the D-19 flag: local
-        // workerd refuses jurisdiction(), so tests address ProjectStores
-        // without one. No deployment carries this binding.
+        // Local values of the deployment's secrets. No region is set:
+        // local workerd refuses jurisdiction(), and with none set the stores
+        // take the plain namespace (D-38).
         bindings: {
           TEST_MIGRATIONS: migrations,
-          LOCAL_UNSCOPED_PROJECT_STORES: "1",
           AUTH_SECRET: "test-auth-secret-not-for-deployment",
           ADMIN_EMAIL: "admin@example.test",
           CLOUDFLARE_CLIENT_ID: "test-client-id",

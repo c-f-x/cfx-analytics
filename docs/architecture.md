@@ -31,7 +31,7 @@ R2 bucket "recordings" · jurisdiction "eu" · snapshot chunks, gzip NDJSON
 |---|---|---|
 | Worker | No state. Routes, decoding, validation, auth checks | Every request |
 | D1 registry | Projects, tokens, secret key hashes, settings | Read on every intake request through a 60 s Cache API entry |
-| ProjectStore | All of one project's data except snapshot bodies | One instance per project, single-threaded, in the EU |
+| ProjectStore | All of one project's data except snapshot bodies | One instance per project, single-threaded, in the installation's region (D-38) |
 | R2 `recordings` | Snapshot chunk bodies | Written by ProjectStore only, read by the recordings slice |
 | Web app | Nothing durable | In the browser, served as static assets by the Worker |
 
@@ -82,11 +82,11 @@ A slice may split `core.ts` into several pure files when it grows. Each keeps th
 |---|---|
 | Pure files import no I/O (`hono`, `cloudflare:*`, `node:*`, a slice's `store.ts` or `http.ts`), and call no clock or random source | `scripts/architecture.test.mjs` |
 | A slice reaches another slice only through that slice's `index.ts` | `scripts/architecture.test.mjs` |
-| A ProjectStore is addressed only by `apps/worker/src/platform/project-store-id.ts`, which always uses the `eu` jurisdiction | `scripts/architecture.test.mjs` |
+| A ProjectStore is addressed only by `apps/worker/src/platform/project-store-id.ts`, in the region `STORE_JURISDICTION` names, never one written into the code | `scripts/architecture.test.mjs` |
 | The web app imports the Worker for types only | `scripts/architecture.test.mjs` |
 | No slice imports the ProjectStore's orchestration (`project-store.ts`, `ingest.ts`, `sweep.ts` in the platform folder) except for types. Those files call several slices' `index.ts`, because one transaction holds them all, so a value import back would make a cycle. | `scripts/architecture.test.mjs` |
 | No module-level mutable state in the Worker | `scripts/architecture.test.mjs` |
-| The R2 bucket is in the `eu` jurisdiction | `scripts/wrangler-config.test.mjs` |
+| The tracked config names no jurisdiction; the deploy takes the region from the site file, and stops when the bucket is not there (ops-03) | `scripts/wrangler-config.test.mjs`, `scripts/ops.test.mjs` |
 
 ## Flows
 

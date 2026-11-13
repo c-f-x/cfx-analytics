@@ -18,6 +18,8 @@ Its shape is `site.example.jsonc` at the repository's root: copy it, fill in you
 
 A key it does not know, or a value of the wrong shape, is an error that names it, so a misspelt key is never silently ignored.
 
+`jurisdiction` says where the data is stored: `"eu"`, or left out for Cloudflare's default placement (D-38). It is chosen once, when the database and bucket are made, because Cloudflare cannot move a store. The deploy joins it into the bucket's binding and into `STORE_JURISDICTION`, which tells the Worker where its ProjectStores are. Before any step, the deploy looks for the bucket in that region and stops when it is not there (ops-03). Backup and restore address the bucket in the same region.
+
 ## Cloudflare resources
 
 One deployment serves every product (D-10). Its resources keep the names they were made with (the owner's ruling, 2026-11-11). Their ids and hostnames are in the site file.
@@ -29,7 +31,7 @@ One deployment serves every product (D-10). Its resources keep the names they we
 | R2 lifecycle rule | `delete-after-400-days` on that bucket: objects expire after 400 days | `pnpm ops wrangler production -- r2 bucket lifecycle remove cfanalytics-recordings --name delete-after-400-days --jurisdiction eu` |
 | Worker | `cfanalytics`, with no workers.dev address | `pnpm ops wrangler production -- delete` |
 | Custom domains | The dashboard's host and each product's intake host, from the site file, each with its DNS record and certificate made by Cloudflare (D-16, D-31) | take the host out of the site file and deploy |
-| Durable Object class | `ProjectStore`, SQLite, every instance in the `eu` jurisdiction | removed with the Worker |
+| Durable Object class | `ProjectStore`, SQLite, every instance in the site file's region (D-38) | removed with the Worker |
 | Worker secrets | `AUTH_SECRET`, `ADMIN_EMAIL`, `DASHBOARD_ORIGIN`, by `pnpm ops secrets production --go`; `CLOUDFLARE_CLIENT_ID` and `CLOUDFLARE_CLIENT_SECRET`, put by the owner | `pnpm ops wrangler production -- secret delete <name>` |
 | OAuth client | "cfanalytics admin sign-in", private to the owner's account, scope `user-details.read`, redirect `https://<dashboard host>/auth/callback` (D-27). Made in the Cloudflare dashboard (Manage account, OAuth clients): response type Code, grant type Authorization Code, token authentication Client Secret Basic. Wrangler cannot make one | delete it in the dashboard |
 | Watcher Worker | `cfanalytics-watch`, a cron trigger every five minutes, no address (D-30) | `pnpm --filter @cfanalytics/watch exec wrangler delete --name cfanalytics-watch` |
@@ -41,7 +43,7 @@ The bindings below are generated from the template `apps/worker/wrangler.jsonc` 
 | Block | Binding | Kind | Resource |
 |---|---|---|---|
 | top level | REGISTRY | D1 | cfanalytics-registry-local |
-| top level | RECORDINGS | R2 | cfanalytics-recordings-local (eu) |
+| top level | RECORDINGS | R2 | cfanalytics-recordings-local (no jurisdiction) |
 | top level | PROJECT_STORE | Durable Object | ProjectStore |
 | top level | ASSETS | Assets | assets |
 <!-- /generated:bindings -->

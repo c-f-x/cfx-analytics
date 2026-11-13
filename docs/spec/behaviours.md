@@ -37,9 +37,9 @@ One line per behaviour:
 - `platform-13` · given the registry check or the recordings bucket check fails, when `/healthz` is asked, then the status is 503 and the body is exactly `{"ok":false}`, with no error text; the checks are `SELECT 1` on the registry and a lookup of one fixed key in the recordings bucket, which reads no visitor's data, and they contact no ProjectStore; the pure part is a function from the checks' outcome to status and body · ours, D-20, operations.md (Health), audit 2026-10-22 · adapt: D-20 fixes the body as `{"ok":false}`
 - `platform-14` · given a POST to `/healthz`, then the answer is 405; every `/healthz` answer carries `Cache-Control: no-store` · ours · keep
 - `platform-15` · given the access checks, when one is removed from the code, then the test suite fails; the proof lives in `scripts/guard-proof.test.mjs`, which breaks one check at a time and restores it · ours, engineering.md (The access checks are proven to guard) · keep
-- `platform-16` · given the run of the dashboard against the local Worker, when `LOCAL_UNSCOPED_PROJECT_STORES` is unset, then the flag is false; when it is set to `"1"`, then the flag is true; any other value, such as `"true"`, `"0"` or the number 1, means false · ours, D-19 · keep
+- `platform-16` · given the run of the dashboard against the local Worker, when `LOCAL_UNSCOPED_PROJECT_STORES` is unset, then the flag is false; when it is set to `"1"`, then the flag is true; any other value, such as `"true"`, `"0"` or the number 1, means false · ours, D-19 · reject: the region comes from `STORE_JURISDICTION` (platform-52, D-38)
 - `platform-17` · given a project id, then the ProjectStore name is a pure function of that id alone, so the same id gives the same object and two ids never share one · ours · keep
-- `platform-18` · given the whole source tree, when it is searched for the local flag's name, then the name appears only in the files allowed to read it · ours, architecture.md (Dependency rules) · keep
+- `platform-18` · given the whole source tree, when it is searched for the local flag's name, then the name appears only in the files allowed to read it · ours, architecture.md (Dependency rules) · reject: the local flag is gone (D-38)
 - `platform-19` · given a project created a moment ago, when its ProjectStore starts, then it holds the nine tables and the step record, and no copy of the project's settings · ours · keep
 - `platform-20` · given a store whose recorded step is 3 and code that ships steps 1 to 5, then the object runs steps 4 and 5 in order and records 5 · ours · keep
 - `platform-21` · given a store whose recorded step is 3 and a step list with a gap at 3 or a repeated number, then the object fails with the step numbers named and runs nothing · ours · keep
@@ -67,6 +67,9 @@ One line per behaviour:
 - `platform-49` · given `GET /auth/status`, then the answer says whether Cloudflare sign-in is set up on this deployment and, with a valid session, who is signed in, and never caches · D-27, D-24 · keep
 - `platform-50` · given a GET of `/`, `/projects` or a path under `/p/`, then the answer is the dashboard's page from the ASSETS binding, and a path under `/app/` is that built file; any other path is left to the routes, and the page holds no data, so it needs no session; every such answer refuses framing (`X-Frame-Options: DENY`, `frame-ancestors 'none'`), sniffing (`nosniff`) and cross-site referrers · D-24, D-27 · keep
 - `platform-51` · given a deployment whose `AUTH_SECRET` is missing or shorter than 32 characters, or whose `ADMIN_EMAIL` or `DASHBOARD_ORIGIN` is missing, then every dashboard path is 401 even with a well-formed session, `/auth/status` says sign-in is not set up, and `/auth/sign-in` and `/auth/callback` are 503; nothing answers 500 · ours, D-27, staging's first deploy · keep
+- `platform-52` · given the Worker's `STORE_JURISDICTION` of `"eu"`, then every ProjectStore is addressed in the `eu` jurisdiction; given it unset, then the plain namespace, Cloudflare's default placement; the value is read only in `project-store-id.ts` and the Worker's entry check · cfx-kit D-11, D-38 · keep
+- `platform-53` · given `STORE_JURISDICTION` set to anything other than `"eu"`, such as `"EU"` or `""`, then `/healthz` and every other route answer 503, so a mistyped region is caught before any store is addressed · ours, D-38 · keep
+- `platform-54` · given the whole source tree, when it is searched for `STORE_JURISDICTION`, then the name appears only in the files allowed to name it · ours, D-38 · keep
 
 ### Rejected
 - `platform-02` · given a valid Access JWT (RS256, test keypair, correct issuer and audience), when it is verified, then the result holds the caller's email; given the same token with one changed byte in the signature, then the result is the error "bad signature" · ours · reject: D-27 replaced Cloudflare Access with Cloudflare sign-in, so no Access JWT is verified
@@ -594,6 +597,8 @@ The watcher, `apps/watch` (D-30): a Worker on a cron trigger that asks productio
 
 - `ops-01` · given the watcher's checks, then the second failed check in a row emails the owner once, naming the address and since when in UTC, and later failed checks stay quiet · ours, D-30 · keep
 - `ops-02` · given one failed check between healthy ones, then nothing is sent; given the first healthy check after an alert, then an email says the deployment is healthy again · ours, D-30 · keep
+- `ops-03` · given a site file's `jurisdiction` and where its recordings bucket really is, when they differ, then the deploy stops before any step changes anything, naming both; a site that says `"eu"` needs the bucket in the `eu` jurisdiction, and one that leaves it out needs the bucket outside it · ours, D-38 · keep
+- `ops-04` · given a site file with `"jurisdiction": "eu"`, then the production config binds the recordings bucket in `eu` and sets `STORE_JURISDICTION` to `"eu"`; given none, then neither; any other value is refused when the site file is read · cfx-kit D-11, D-38 · keep
 
 ## privacy
 
