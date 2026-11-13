@@ -50,3 +50,115 @@ export function newestSnapshot<E extends { type: number }>(events: readonly E[])
   }
   return null;
 }
+
+// ── What an event says, in plain words (#22) ────────────────────────────────
+
+/** One element of posthog-js's `$elements_chain`, innermost first (config-09). */
+export interface ChainElement {
+  tag: string;
+  text: string | null;
+  label: string | null;
+  href: string | null;
+}
+
+const ATTR = (name: string) => new RegExp(`${name}="((?:[^"\\\\]|\\\\.)*)"`);
+
+/** The chain's elements, innermost first. An element posthog-js wrote oddly is skipped. */
+export function chainOf(chain: string): ChainElement[] {
+  return chain
+    .split(";")
+    .map((part) => {
+      const tag = /^([a-zA-Z][\w-]*)/.exec(part)?.[1]?.toLowerCase();
+      if (tag === undefined) return null;
+      const read = (name: string) => ATTR(name).exec(part)?.[1]?.trim() || null;
+      return {
+        tag,
+        text: read("text"),
+        label: read("attr__aria-label") ?? read("attr__title") ?? read("attr__alt"),
+        href: read("attr__href"),
+      };
+    })
+    .filter((element): element is ChainElement => element !== null);
+}
+
+const KIND_OF_TAG: Record<string, string> = {
+  a: "a link",
+  button: "a button",
+  summary: "a menu",
+  input: "a field",
+  select: "a list",
+  textarea: "a field",
+  img: "an image",
+  label: "a label",
+};
+
+/** What a click hit: the nearest named element within four steps out, else its kind. */
+function target(chain: ChainElement[]): string {
+  for (const element of chain.slice(0, 4)) {
+    const name = element.text ?? element.label;
+    if (name !== null) return `'${name.length > 40 ? `${name.slice(0, 39)}…` : name}'`;
+  }
+  const kind = chain.slice(0, 4).find((element) => element.tag in KIND_OF_TAG);
+  if (kind?.href) return `a link to ${kind.href}`;
+  return KIND_OF_TAG[kind?.tag ?? ""] ?? "the page";
+}
+
+/** Events that only help the SDK, left out of the list and the timeline. */
+const HIDDEN = new Set([
+  "$feature_flag_called",
+  "$web_vitals",
+  "$set",
+  "$groupidentify",
+  "$identify",
+  "$opt_in",
+]);
+
+export type EventKind = "page" | "click" | "problem" | "other";
+
+export interface EventLabel {
+  label: string;
+  kind: EventKind;
+}
+
+const pathOf = (properties: Record<string, unknown>) => {
+  const path = properties["$pathname"];
+  if (typeof path === "string" && path !== "") return path;
+  const url = properties["$current_url"];
+  if (typeof url === "string") {
+    try {
+      return new URL(url).pathname;
+    } catch {
+      return url;
+    }
+  }
+  return "a page";
+};
+
+/** An event in plain words, or null when it only helps the SDK. Pure. */
+export function labelOf(row: {
+  event: string;
+  properties: Record<string, unknown>;
+}): EventLabel | null {
+  const { event, properties } = row;
+  if (HIDDEN.has(event)) return null;
+  const chain =
+    typeof properties["$elements_chain"] === "string" ? chainOf(properties["$elements_chain"]) : [];
+  switch (event) {
+    case "$pageview":
+      return { label: `Opened ${pathOf(properties)}`, kind: "page" };
+    case "$pageleave":
+      return { label: `Left ${pathOf(properties)}`, kind: "other" };
+    case "$rageclick":
+      return { label: `Rage-clicked ${target(chain)}`, kind: "problem" };
+    case "$dead_click":
+      return { label: `Clicked ${target(chain)}, nothing happened`, kind: "problem" };
+    case "$autocapture": {
+      const type = properties["$event_type"];
+      if (type === "change") return { label: "Changed a field", kind: "other" };
+      if (type === "submit") return { label: "Submitted a form", kind: "click" };
+      return { label: `Clicked ${target(chain)}`, kind: "click" };
+    }
+    default:
+      return { label: event, kind: "other" };
+  }
+}
