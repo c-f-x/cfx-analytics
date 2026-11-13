@@ -602,6 +602,19 @@ The watcher, `apps/watch` (D-30): a Worker on a cron trigger that asks productio
 - `ops-03` · given a site file's `jurisdiction` and where its recordings bucket really is, when they differ, then the deploy stops before any step changes anything, naming both; a site that says `"eu"` needs the bucket in the `eu` jurisdiction, and one that leaves it out needs the bucket outside it · ours, D-38 · keep
 - `ops-04` · given a site file with `"jurisdiction": "eu"`, then the production config binds the recordings bucket in `eu` and sets `STORE_JURISDICTION` to `"eu"`; given none, then neither; any other value is refused when the site file is read · cfx-kit D-11, D-38 · keep
 
+## alerts
+
+The weekly email and the alert rules (#23). Mail goes only to the site file's verified `alert_addresses`, through one `mail.ts`.
+
+- `alerts-01` · given the products one recipient receives, then one weekly email lists every product that had visitors this week or the week before, busiest first, each with its visitors and sessions, the change from the week before, and the week's dates in the product's time zone · ours, #23 · keep
+- `alerts-02` · given a product's week, then its part names its top five pages and top five sources by visitors, and leaves either list out when it is empty · ours, #23 · keep
+- `alerts-03` · given rage clicks or clicks that did nothing in a product's week, then its part says how many of each and the page with the most rage clicks; given none, it says nothing about problems · ours, #23 · keep
+- `alerts-04` · given products with no visitors in either week, then they share one closing line by name; given no product with any visitors, then no email is sent · ours, #23 · keep
+- `alerts-05` · given the weekly email, then its subject names the week and the total visitors, each product's part links its board on the dashboard, and the text holds no visitor's personal data · ours, #23 · keep
+- `alerts-06` · given the moment the weekly job runs and a product's time zone, then its week is the last whole Monday to Sunday there, half-open from Monday 00:00 to the next Monday 00:00 local time, and the week before it ends where it starts; a week across a daylight-saving change is 167 or 169 hours long · ours, #23 · keep
+- `alerts-07` · given the weekly job, then every product that is not deleted is read for its last week and the week before, and one email goes to each of the site file's alert addresses; a product whose store does not answer is left out and logged, and the job's outcome counts the emails sent and the products left out; with no alert address, nothing is sent and the outcome says so · ours, #23 · keep
+- `alerts-08` · given `POST /api/emails/weekly` with the admin's session from the dashboard's origin, then this week's email is sent now to every alert address, and the answer counts the emails sent and the products left out; without a session it is 401, from another origin 403, and any other method 405 · ours, #23 · keep
+
 ## privacy
 
 - `privacy-01` · given events older than the project's retention days, when the daily alarm runs, then they are deleted; the test ages 105 rows past the boundary and leaves 2 inside, deletes in batches, and reports 105 · insightflare:src/lib/edge/ingest/__tests__/alarm-sweep.test.ts · keep

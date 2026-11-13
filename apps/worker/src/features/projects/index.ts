@@ -4,6 +4,7 @@ export { bearerOf, isSecretKeyShape } from "./core.ts";
 export { dashboardProject, mountProjects, sdkProject } from "./http.ts";
 export {
   getProject,
+  listProjects,
   markDeleted,
   type ResolvedProject,
   removeProjectRows,

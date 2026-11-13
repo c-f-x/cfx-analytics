@@ -13,6 +13,7 @@
     "test:size": "vitest run size.test"
   },
   "dependencies": {
+    "@c-f-x/kit": "https://github.com/c-f-x/cfx-kit/releases/download/v0.3.0/c-f-x-kit-0.3.0.tgz",
     "@cfanalytics/shared": "workspace:*",
     "hono": "4.13.16",
     "isbot": "5.2.2"

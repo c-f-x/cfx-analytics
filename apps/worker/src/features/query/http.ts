@@ -1,4 +1,5 @@
 import {
+  type Answer,
   type ApiIssue,
   ERROR_CODES,
   type ErrorCode,
@@ -6,6 +7,7 @@ import {
   type QuerySpec,
 } from "@cfanalytics/shared";
 import type { Hono } from "hono";
+import type { Deps } from "../../platform/deps.ts";
 import {
   type AppContext,
   type AppEnv,
@@ -26,7 +28,7 @@ import {
   type ResolvedProject,
   resolveSecretKey,
 } from "../projects/index.ts";
-import { answerQuery, prepareQuery } from "./compile.ts";
+import { answerQuery, prepareQuery, type QueryResult } from "./compile.ts";
 import { parseSpec } from "./validate.ts";
 
 // The query routes (architecture.md, "A query"). Neither carries CORS
@@ -95,12 +97,20 @@ async function readSpec(c: AppContext): Promise<Result<QuerySpec, Response>> {
 }
 
 /** Steps 7 to 9: prepare the spec, one runQuery RPC, and the answer (query-12, query-73). */
-async function answerProjectQuery(
-  c: AppContext,
+/** Why a project's query has no answer: its spec does not fit, or its store did not answer. */
+export type RunFailure = { kind: "invalid"; issues: ApiIssue[] } | { kind: "unavailable" };
+
+/**
+ * A query against one project's store, with the project's time zone,
+ * retention and own-traffic rules. The dashboard's route, the external route
+ * and the weekly email all run their queries through this (#23).
+ */
+export async function runProjectQuery(
+  env: Cloudflare.Env,
+  deps: Deps,
   project: ResolvedProject,
   spec: QuerySpec,
-): Promise<Response> {
-  const deps = c.get("deps");
+): Promise<Result<Answer<QueryResult>, RunFailure>> {
   const now = deps.now();
   const settings = project.settings;
   const prepared = prepareQuery(spec, {
@@ -109,23 +119,33 @@ async function answerProjectQuery(
     retentionStart: retentionStart(now, settings.events_retention_days),
     internalRules: settings.internal_rules,
   });
-  if (!prepared.ok) return prepareFailure(prepared.error);
+  if (!prepared.ok) return err({ kind: "invalid", issues: prepared.error });
 
-  const store = projectStore(c.env, project.id);
+  const store = projectStore(env, project.id);
   let rows: Awaited<ReturnType<typeof store.runQuery>>;
   try {
     rows = await store.runQuery(prepared.value.compiled);
   } catch (cause) {
     deps.log.error("project_store_failed", { message: messageOf(cause) });
-    return apiError(503, "unavailable", STORE_UNAVAILABLE);
+    return err({ kind: "unavailable" });
   }
   if (!rows.ok) {
     deps.log.error("project_store_refused", { error: rows.error });
-    return apiError(503, "unavailable", STORE_UNAVAILABLE);
+    return err({ kind: "unavailable" });
   }
+  return ok(answerQuery(spec, prepared.value, rows.value));
+}
 
-  const answer = answerQuery(spec, prepared.value, rows.value);
-  return dashboardAnswer(answer);
+async function answerProjectQuery(
+  c: AppContext,
+  project: ResolvedProject,
+  spec: QuerySpec,
+): Promise<Response> {
+  const answer = await runProjectQuery(c.env, c.get("deps"), project, spec);
+  if (answer.ok) return dashboardAnswer(answer.value);
+  return answer.error.kind === "invalid"
+    ? prepareFailure(answer.error.issues)
+    : apiError(503, "unavailable", STORE_UNAVAILABLE);
 }
 
 /**

@@ -290,6 +290,9 @@ importers:
 
   apps/worker:
     dependencies:
+      '@c-f-x/kit':
+        specifier: https://github.com/c-f-x/cfx-kit/releases/download/v0.3.0/c-f-x-kit-0.3.0.tgz
+        version: https://github.com/c-f-x/cfx-kit/releases/download/v0.3.0/c-f-x-kit-0.3.0.tgz
       '@cfanalytics/shared':
         specifier: workspace:*
         version: link:../../packages/shared

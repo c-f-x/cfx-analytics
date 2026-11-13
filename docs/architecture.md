@@ -52,6 +52,7 @@ A slice owns one feature from its HTTP route to its tables. Worker slices live i
 | `heatmaps` | Click, rage-click and dead-click points per page and viewport width, and the heatmap route. Scroll depth is a `query` kind. | `heatmap_points` |
 | `query` | Typed query specs, their compilers and the store's folds: trends, breakdowns, top lists, funnels, retention, scroll depth, the event list, the property list | none (reads) |
 | `privacy` | Retention cutoffs and the sweep's order, deletion by person, export pages, and starting a deleted project's purge | deletes through each slice's prune and erase functions, called from `ingest.ts` and `sweep.ts` |
+| `alerts` | The weekly email: each product's last whole week in its time zone, the queries that read it, and its plain-text summary (#23) | none (pure) |
 
 | Web slice | Screen |
 |---|---|
@@ -130,6 +131,10 @@ A deletion by person (`POST /api/projects/:id/persons/erase`, the distinct id in
 
 A project is deleted in two requests. `DELETE /api/projects/:id` marks it, and its token and keys are refused within 60 seconds. `POST /api/projects/:id/purge` sets the store's alarm for 60 seconds after the mark. The alarm then deletes the project's R2 prefix, wipes the store, removes the D1 rows and finally clears the object. A pass that stops part way runs again on the next alarm and deletes nothing twice. Each alarm reads the project's row in the registry, so a store whose project is marked deleted purges instead of sweeping.
 
+### The weekly email
+
+A cron trigger runs the Worker's `scheduled` handler on Mondays at 06:00 UTC. It runs `apps/worker/src/platform/weekly.ts` through the kit's `job`, so each run logs `job_done` or `job_failed`. The run lists the products from the registry, asks each product's store the `alerts` slice's questions about its last whole week through the same `runProjectQuery` the dashboard uses, and builds one email. `apps/worker/src/platform/mail.ts`, the one module that sends, sends it through the `send_email` binding to each of the site file's alert addresses, which the deploy writes into the binding's allowlist. A product whose store does not answer is left out and logged. `POST /api/emails/weekly` runs the same thing at once.
+
 ### Who may call what
 
 | Path | Caller | Check |
@@ -140,6 +145,7 @@ A project is deleted in two requests. `DELETE /api/projects/:id` marks it, and i
 | `/auth/sign-in`, `/auth/callback`, `/auth/sign-out`, `/auth/status` | The owner's browser | none to start; the callback admits only `ADMIN_EMAIL`'s Cloudflare account (D-27). Until `AUTH_SECRET`, `ADMIN_EMAIL` and `DASHBOARD_ORIGIN` are set, sign-in is 503 and every dashboard path 401 (platform-51) |
 | `/api/projects` and `/api/projects/:id/*` | The owner, through the dashboard | A session cookie signed with `AUTH_SECRET`, checked in the Worker on every request; state changes also need the dashboard's Origin |
 | `/`, `/projects`, `/p/*`, `/app/*` | The owner's browser | none; the dashboard's page holds no data and asks the API for everything. Its answers refuse framing and sniffing (platform-50) |
+| `/api/emails/weekly` | The owner, through the dashboard | A session cookie, and the dashboard's own origin (alerts-08) |
 | `/healthz` | Monitoring | none; it reveals nothing |
 
 The Worker checks the caller by path, whatever the host, so the dashboard's data needs a session on every host and the SDK paths need none. The owner signs in with Cloudflare through a private OAuth client in their account, and the session lives in a signed cookie, so nothing about it is stored (D-27).
@@ -180,6 +186,7 @@ apps/
     migrations/
     src/
       features/
+        alerts/
         config/
         cookieless/
         enrich/

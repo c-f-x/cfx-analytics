@@ -441,3 +441,16 @@ The owner added: "we have to change all reference in UI etc from cfanalytics to 
 
 **Consequences.** The owner's deployment was made in the EU and stays there: its site file says `"eu"`. An installer who leaves it out gets Cloudflare's default placement. The README and the docs say the installer chooses.
 
+## D-39 · One weekly email per recipient, to the site file's verified addresses · accepted (2026-11-13)
+
+**Made by.** The owner gave the go for #23 ("go for #23 .. just think through how the user should define where the emails should be sent, per project or some default for all projects etc?"). The lead chose how, below.
+
+**Context.** #23 planned a weekly email per product, sent through a cfx-mail service mailbox. The c-f-x conventions (section 6) send product notifications through a tool's own `send_email` binding to verified addresses, which is free and does not depend on cfx-mail; only mail to unverified addresses is metered and goes through cfx-mail. Replaying the planned alert rules over the owner's real traffic on 2026-11-13 found every product too quiet to judge: most days had no visitors, and the busiest had 74.
+
+**Decision.**
+- Recipients are one installation-wide list, the site file's `alert_addresses`, the family's standard field. The deploy writes it into the binding's allowlist, so the Worker cannot mail anyone else. Each product will choose which of those addresses get its mail, in Settings, in #23's next step. No free-typed address per product, because it would be unverified and metered.
+- Each recipient gets one email a week that covers all their products, busiest first, with quiet products on one line, and none when nothing happened. Nine separate emails, mostly about products with no visitors, would be noise.
+- The weekly email comes first. Alert rules follow, with floors that keep them silent until a product has steady traffic.
+
+**Consequences.** The site file gains `alert_addresses`. A new address works only once its owner clicks Cloudflare's verification link. `apps/worker/src/platform/mail.ts` is the one module that sends.
+
