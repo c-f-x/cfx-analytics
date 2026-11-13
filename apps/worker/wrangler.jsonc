@@ -23,6 +23,10 @@
       "migrations_dir": "migrations"
     }
   ],
+  // The weekly email (#23): mail.ts sends through this binding, Mondays at
+  // 06:00 UTC. The deploy restricts it to the site file's alert addresses.
+  "send_email": [{ "name": "MAIL" }],
+  "triggers": { "crons": ["0 6 * * 1"] },
   "durable_objects": {
     "bindings": [{ "name": "PROJECT_STORE", "class_name": "ProjectStore" }]
   },

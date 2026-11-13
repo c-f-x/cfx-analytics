@@ -22,6 +22,12 @@ declare global {
       DASHBOARD_ORIGIN: string;
       /** Where the stores live, from the site file's jurisdiction; unset for the default placement (D-38). */
       STORE_JURISDICTION?: "eu";
+      /** The send_email binding mail.ts sends through, to the site file's alert addresses only (#23). */
+      MAIL: SendEmail;
+      /** The verified address mail comes from: the site file's watch.from. */
+      MAIL_FROM?: string;
+      /** The site file's alert_addresses, as a JSON list (#23). */
+      ALERT_ADDRESSES?: string;
     }
   }
 }

@@ -75,3 +75,7 @@ The smoke test, the backup, the export and the restore sign in to the dashboard'
 Cloudflare's notifications have no alert for Worker errors, so the watcher, `cfanalytics-watch`, does it (D-30). It is a separate Worker on a five-minute cron trigger, so a broken deploy of the Worker it watches cannot silence it. It emails the site file's `watch.to` from `watch.from` when two checks in a row fail, and again on the first check that passes after. It costs nothing: cron triggers, one KV key and sends to a verified address are free. In the c-f-x family, cfx-status takes this job over later.
 
 The Worker writes one log line per failure (`project_store_failed`, `registry_unavailable`, `sign_in_failed` and others) to Workers Logs, which keeps 7 days on the paid plan. `pnpm ops wrangler production -- tail --status error` shows them live.
+
+### The weekly email
+
+Every Monday at 06:00 UTC the Worker emails each of the site file's `alert_addresses` one summary of the week before: every product's visitors and sessions against the week before, its top pages and sources, and its rage clicks and clicks that did nothing (#23). It comes from `watch.from`, the address the watcher sends from. Cloudflare sends only to verified addresses: add one under Email Routing, Destination addresses, and it must click the link Cloudflare emails before the deploy can use it. Each run logs `job_done` or `job_failed` with the name `weekly_email`. The owner can send it at once from the dashboard, or with `POST /api/emails/weekly`.

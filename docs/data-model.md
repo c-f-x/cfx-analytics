@@ -34,6 +34,7 @@ Copies of the data that no binding holds. Each still has a lifetime.
 |---|---|---|---|
 | Cache API | Registry answers for tokens | 60 seconds | Expiry |
 | Exports | One product's tables as NDJSON: `pnpm ops export` writes them to a folder the owner names, and the dashboard's Export data downloads one table at a time | The owner's choice; neither ever deletes a file | The owner |
+| Emails | The weekly email (#23): each product's week of counts, top pages and sources, and links to the dashboard. No visitor's personal data | The recipients' choice | The recipients |
 | Backups | `pnpm ops backup`'s folder: the registry's rows, every product's tables and every recording object, with a manifest. It holds visitors' data | The owner's choice. A repeat run adds what is new and never deletes, so data erased in production stays in an older backup | The owner |
 | Point-in-time recovery | Cloudflare's own copy of each ProjectStore | 30 days | Cloudflare |
 | D1 Time Travel | Cloudflare's own copy of the registry, to any minute | 30 days on Workers Paid (developers.cloudflare.com/d1/reference/time-travel/, read 2026-11-11) | Cloudflare |

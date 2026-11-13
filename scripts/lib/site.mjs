@@ -24,6 +24,7 @@ export const SITE_FILE = "cfx-analytics.jsonc";
  *     r2_bucket: string,
  *   },
  *   watch: { name: string, kv_id: string, from: string, to: string },
+ *   alert_addresses: string[],
  *   jurisdiction?: "eu",
  * }} Site
  */
@@ -59,6 +60,11 @@ const FIELDS = [
   ["watch.kv_id", (v) => typeof v === "string" && HEX32.test(v), "a KV namespace id"],
   ["watch.from", (v) => typeof v === "string" && EMAIL.test(v), "an email address"],
   ["watch.to", (v) => typeof v === "string" && EMAIL.test(v), "an email address"],
+  [
+    "alert_addresses",
+    (v) => Array.isArray(v) && v.length > 0 && v.every((a) => typeof a === "string" && EMAIL.test(a)),
+    "a list of at least one verified email address",
+  ],
 ];
 
 // Where the installation keeps its data (cfx-kit D-11, D-38): "eu", or left
@@ -126,6 +132,10 @@ export function siteOf(raw) {
         from: text("watch.from"),
         to: text("watch.to"),
       },
+      alert_addresses: (() => {
+        const list = valueAt(raw, "alert_addresses");
+        return Array.isArray(list) ? list.filter((a) => typeof a === "string") : [];
+      })(),
       ...(raw[JURISDICTION] === "eu" ? { jurisdiction: "eu" } : {}),
     },
   };
@@ -243,10 +253,16 @@ export function joinWorker(template, site, dir) {
             ...(site.jurisdiction === undefined ? {} : { jurisdiction: site.jurisdiction }),
           },
         ],
-        // The one place the Worker learns where its stores are (platform-52).
-        ...(site.jurisdiction === undefined
-          ? {}
-          : { vars: { STORE_JURISDICTION: site.jurisdiction } }),
+        // The weekly email (#23): the binding may send only to the alert
+        // addresses, from the watcher's verified sender, on the template's cron.
+        send_email: [{ name: "MAIL", allowed_destination_addresses: site.alert_addresses }],
+        triggers: base.triggers,
+        vars: {
+          MAIL_FROM: site.watch.from,
+          ALERT_ADDRESSES: JSON.stringify(site.alert_addresses),
+          // The one place the Worker learns where its stores are (platform-52).
+          ...(site.jurisdiction === undefined ? {} : { STORE_JURISDICTION: site.jurisdiction }),
+        },
         assets: base.assets,
       },
     },

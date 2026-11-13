@@ -1,3 +1,4 @@
+import { job } from "@c-f-x/kit/worker";
 import { Hono } from "hono";
 import { mountConfig } from "./features/config/index.ts";
 import { mountHeatmaps } from "./features/heatmaps/index.ts";
@@ -13,6 +14,7 @@ import { type AppEnv, apiError } from "./platform/http.ts";
 import { storeJurisdiction } from "./platform/project-store-id.ts";
 import { requireAdmin } from "./platform/session.ts";
 import { mountSignIn } from "./platform/sign-in.ts";
+import { mountWeekly, runWeekly } from "./platform/weekly.ts";
 
 export { ProjectStore } from "./platform/project-store.ts";
 
@@ -51,10 +53,23 @@ mountProjects(app);
 mountHeatmaps(app);
 mountQuery(app);
 mountPrivacy(app);
+mountWeekly(app);
 mountDashboard(app);
 
 // Any other dashboard path checks the session first, so a path or project id
 // that does not exist is 401 without a valid session, never 404 (platform-01).
 app.all("/api/projects/*", requireAdmin(), () => apiError(404, "not_found", "No such path."));
 
-export default app;
+/** The weekly email's run, failing loudly so job logs it as failed (alerts-07). */
+async function weeklyJob(env: Cloudflare.Env): Promise<void> {
+  const outcome = await runWeekly(env, realDeps());
+  if (!outcome.ok) throw new Error(outcome.error);
+}
+
+// The cron trigger in wrangler.jsonc, Mondays at 06:00 UTC: the weekly email,
+// through the kit's job, so each run records its outcome (#23).
+function onCron(_controller: ScheduledController, env: Cloudflare.Env, ctx: ExecutionContext): void {
+  ctx.waitUntil(job("weekly_email", () => weeklyJob(env)));
+}
+
+export default { fetch: app.fetch, scheduled: onCron } satisfies ExportedHandler<Cloudflare.Env>;
