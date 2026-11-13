@@ -82,6 +82,8 @@ read -rs v && printf '%s' "$v" | npx wrangler secret put CLOUDFLARE_CLIENT_ID --
 read -rs v && printf '%s' "$v" | npx wrangler secret put CLOUDFLARE_CLIENT_SECRET --name <worker>; unset v
 ```
 
+Optional: to add addresses for the weekly email in Settings, put `CLOUDFLARE_EMAIL_TOKEN`, a token with only Email Routing Addresses Edit, the same way (`docs/operations.md`, D-40).
+
 ### Check that it works
 
 ```bash

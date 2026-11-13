@@ -256,13 +256,16 @@ export function joinWorker(template, site, dir) {
             ...(site.jurisdiction === undefined ? {} : { jurisdiction: site.jurisdiction }),
           },
         ],
-        // The weekly email (#23): the binding may send only to the alert
-        // addresses, from the watcher's verified sender, on the template's cron.
-        send_email: [{ name: "MAIL", allowed_destination_addresses: site.alert_addresses }],
+        // The weekly email (#23, D-40): from the watcher's verified sender, on
+        // the template's cron. Its recipients are the alert addresses and the
+        // ones added in the dashboard that Cloudflare marks confirmed, which
+        // the Worker checks before every send (alerts-13).
+        send_email: [{ name: "MAIL" }],
         triggers: base.triggers,
         vars: {
           MAIL_FROM: site.watch.from,
           ALERT_ADDRESSES: JSON.stringify(site.alert_addresses),
+          CLOUDFLARE_ACCOUNT_ID: site.account_id,
           // The one place the Worker learns where its stores are (platform-52).
           ...(site.jurisdiction === undefined ? {} : { STORE_JURISDICTION: site.jurisdiction }),
         },

@@ -13,7 +13,7 @@ export interface Deps {
   now: Clock;
   random: RandomBytes;
   log: Logger;
-  /** The outside world: Cloudflare's OAuth token and user endpoints (D-27), and nothing of ours. */
+  /** The outside world: Cloudflare's OAuth token and user endpoints (D-27) and its Email Routing API (D-40), and nothing of ours. */
   fetch: (input: string, init?: RequestInit) => Promise<Response>;
 }
 

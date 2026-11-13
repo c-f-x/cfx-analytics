@@ -80,6 +80,8 @@ export async function seedProject(seed: ProjectSeed = {}) {
       Number(settings.autocapture_enabled),
       Number(settings.dead_clicks_enabled),
       JSON.stringify(settings.internal_rules),
+      Number(settings.weekly_email),
+      JSON.stringify(settings.email_off),
     )
     .run();
   return { id, name, token, settings };

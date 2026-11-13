@@ -232,3 +232,35 @@ export function productWeekOf(
     deadClicks: totalOf(answers.dead),
   };
 }
+
+/**
+ * Who gets the weekly email (alerts-13): the setup's addresses, and the added
+ * ones Cloudflare marks confirmed, each once, setup first.
+ */
+export function recipientsOf(
+  setup: string[],
+  added: string[],
+  destinations: { email: string; verified: boolean }[],
+): string[] {
+  const confirmed = new Set(
+    destinations.filter((d) => d.verified).map((d) => d.email.toLowerCase()),
+  );
+  const out: string[] = [];
+  for (const address of setup.map((a) => a.toLowerCase()))
+    if (!out.includes(address)) out.push(address);
+  for (const address of added.map((a) => a.toLowerCase())) {
+    if (confirmed.has(address) && !out.includes(address)) out.push(address);
+  }
+  return out;
+}
+
+/** Whether a product is in an address's weekly email (alerts-09, alerts-13). */
+export function receives(
+  settings: { weekly_email: boolean; email_off: string[] },
+  address: string,
+): boolean {
+  return (
+    settings.weekly_email &&
+    !settings.email_off.some((a) => a.toLowerCase() === address.toLowerCase())
+  );
+}

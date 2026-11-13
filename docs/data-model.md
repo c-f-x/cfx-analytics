@@ -8,9 +8,10 @@ Every store the deployment binds and every table the schema steps make has one r
 
 | Store | Holds | Lifetime | Removed by |
 |---|---|---|---|
-| `REGISTRY` | The D1 registry, in the installation's region (D-38): the tables `projects`, `secret_keys` and `board_tiles` below | As long as the deployment runs; each table's rows by its own rule | Deleting the database (`docs/operations.md`) |
+| `REGISTRY` | The D1 registry, in the installation's region (D-38): the tables `projects`, `secret_keys`, `board_tiles` and `email_addresses` below | As long as the deployment runs; each table's rows by its own rule | Deleting the database (`docs/operations.md`) |
 | `projects` | One row per project: name, public token, time zone, settings | Until the project is deleted, then until its data is purged | `privacy` purge, after the ProjectStore and R2 prefix are empty |
 | `secret_keys` | Hash, label, created and last-used dates of each project secret key | Until revoked or the project is deleted | `projects` on revoke; `privacy` purge |
+| `email_addresses` | The addresses the owner added for the weekly email, and when (D-40). Whether each is confirmed is read from Cloudflare each time, never stored | Until the owner removes it in Settings | `alerts` on remove |
 | `board_tiles` | Each project's board: saved questions in position order, each a query spec without range or time zone, and whether it is a standard tile (D-24); a standard tile asked a new question becomes the board's own (projects-45) | Until removed from the board, or the project is deleted, then until its data is purged; at most 40 a project | `projects` on remove; `privacy` purge, in the batch that removes the project's rows |
 | `ProjectStore` | One SQLite Durable Object per product, in the installation's region (D-38): the tables `store_meta` to `counters` below | Until its product is deleted, then until the purge | The purge deletes the whole object's storage (privacy-03) |
 | `store_meta` | The schema step runner's record: the last step applied and the product's id | As long as its ProjectStore | The purge, with the rest of the object |
@@ -80,5 +81,6 @@ A change to a store's shape is a new numbered step, never an edit to an applied 
 <!-- generated:schema-steps -->
 - `apps/worker/migrations/0001-registry.sql`
 - `apps/worker/migrations/0002-board-tiles.sql`
+- `apps/worker/migrations/0003-weekly-email.sql`
 - `apps/worker/src/platform/schema/0001-project-store.sql`
 <!-- /generated:schema-steps -->

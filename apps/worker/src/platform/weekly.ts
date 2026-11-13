@@ -2,8 +2,11 @@ import type { ProjectInfo, TopResult, TrendResult } from "@cfanalytics/shared";
 import type { Hono } from "hono";
 import {
   lastWeeks,
+  listAddedAddresses,
   type ProductWeek,
   productWeekOf,
+  receives,
+  recipientsOf,
   type WeekAnswers,
   weeklyEmail,
   weekQueries,
@@ -11,6 +14,7 @@ import {
 import { listProjects } from "../features/projects/index.ts";
 import { runProjectQuery } from "../features/query/index.ts";
 import type { Deps } from "./deps.ts";
+import { emailRouting } from "./email-routing.ts";
 import { type AppEnv, apiError, dashboardAnswer } from "./http.ts";
 import { alertAddresses, sendMail } from "./mail.ts";
 import { err, ok, type Result } from "./result.ts";
@@ -108,7 +112,7 @@ export async function sendWeeklyEmails(
   if (run.recipients.length === 0) return err("no alert address: the site file lists none");
   const listed = await listProjects(env.REGISTRY);
   if (!listed.ok) return err(`the registry did not answer: ${listed.error.message}`);
-  const weeks: ProductWeek[] = [];
+  const weeks: { week: ProductWeek; settings: ProjectInfo["settings"] }[] = [];
   const leftOut: string[] = [];
   for (const project of listed.value.filter((p) => p.deletedAt === null)) {
     // One product at a time keeps each store's load to one question set.
@@ -118,13 +122,15 @@ export async function sendWeeklyEmails(
       deps.log.error("weekly_product_left_out", { project: project.id });
       leftOut.push(project.id);
     } else {
-      weeks.push(week);
+      weeks.push({ week, settings: project.settings });
     }
   }
-  const email = weeklyEmail(weeks, run.origin);
-  if (email === null) return ok({ sent: 0, leftOut });
   let sent = 0;
   for (const to of run.recipients) {
+    // Each address gets only the products it receives (alerts-13).
+    const theirs = weeks.filter((w) => receives(w.settings, to)).map((w) => w.week);
+    const email = weeklyEmail(theirs, run.origin);
+    if (email === null) continue;
     // oxlint-disable-next-line no-await-in-loop
     const result = await run.send({ to, subject: email.subject, text: email.text });
     if (result.ok) sent += 1;
@@ -134,15 +140,42 @@ export async function sendWeeklyEmails(
 }
 
 /**
+ * The setup's addresses, and the added ones Cloudflare marks confirmed
+ * (alerts-13). When the added ones cannot be read, only the setup's get the
+ * email, and the reason is logged: an unconfirmed address is never mailed.
+ */
+async function confirmedRecipients(
+  env: Cloudflare.Env,
+  deps: Deps,
+  setup: string[],
+): Promise<string[]> {
+  const account = env.CLOUDFLARE_ACCOUNT_ID;
+  const token = env.CLOUDFLARE_EMAIL_TOKEN;
+  if (account === undefined || token === undefined) return recipientsOf(setup, [], []);
+  const [added, known] = await Promise.all([
+    listAddedAddresses(env.REGISTRY),
+    emailRouting(account, token, deps.fetch).list(),
+  ]);
+  if (!added.ok || !known.ok) {
+    deps.log.error("weekly_added_addresses_unread", {
+      message: added.ok ? (known.ok ? "" : known.error) : added.error,
+    });
+    return recipientsOf(setup, [], []);
+  }
+  return recipientsOf(setup, added.value, known.value);
+}
+
+/**
  * The weekly run with this deployment's configuration: the site file's alert
  * addresses, the dashboard's origin, and mail.ts. The scheduled handler runs
  * it through the kit's job, and the dashboard's "send it now" route directly.
  */
 export async function runWeekly(env: Cloudflare.Env, deps: Deps): Promise<Result<WeeklyOutcome>> {
-  const recipients = alertAddresses(env.ALERT_ADDRESSES);
-  if (!recipients.ok) return err(recipients.error);
+  const setup = alertAddresses(env.ALERT_ADDRESSES);
+  if (!setup.ok) return err(setup.error);
+  const recipients = await confirmedRecipients(env, deps, setup.value);
   return sendWeeklyEmails(env, deps, {
-    recipients: recipients.value,
+    recipients,
     origin: env.DASHBOARD_ORIGIN,
     send: (mail) => sendMail(env, mail),
   });

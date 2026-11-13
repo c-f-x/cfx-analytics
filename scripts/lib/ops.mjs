@@ -132,11 +132,12 @@ export function buildDigest(dir) {
 
 /**
  * The registry's tables, in the order a restore loads them: a product before
- * the keys and tiles that name it. The backup exports their rows without the
- * schema, since a restore loads them into a deployment whose migrations made
- * the tables. scripts/ops.test.mjs keeps this list equal to the migrations'.
+ * the keys and tiles that name it, then the added email addresses, which name
+ * none. The backup exports their rows without the schema, since a restore
+ * loads them into a deployment whose migrations made the tables.
+ * scripts/ops.test.mjs keeps this list equal to the migrations'.
  */
-export const REGISTRY_TABLES = ["projects", "secret_keys", "board_tiles"];
+export const REGISTRY_TABLES = ["projects", "secret_keys", "board_tiles", "email_addresses"];
 
 /**
  * What a /healthz answer means (platform-12, platform-13).

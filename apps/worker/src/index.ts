@@ -1,5 +1,6 @@
 import { job } from "@c-f-x/kit/worker";
 import { Hono } from "hono";
+import { mountEmails } from "./features/alerts/index.ts";
 import { mountConfig } from "./features/config/index.ts";
 import { mountHeatmaps } from "./features/heatmaps/index.ts";
 import { mountCapture } from "./features/intake/index.ts";
@@ -54,6 +55,7 @@ mountHeatmaps(app);
 mountQuery(app);
 mountPrivacy(app);
 mountWeekly(app);
+mountEmails(app);
 mountDashboard(app);
 
 // Any other dashboard path checks the session first, so a path or project id

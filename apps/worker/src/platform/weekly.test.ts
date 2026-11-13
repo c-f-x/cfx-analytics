@@ -62,6 +62,39 @@ describe("sendWeeklyEmails", () => {
     expect(sent[0]?.text).not.toContain("Gone");
   });
 
+  it("alerts-13 · each address gets only the products it receives, and one that receives none gets nothing", async () => {
+    const shop = await seedProject({
+      name: "Shop",
+      settings: { timezone: "UTC", email_off: ["partner@example.com"] },
+    });
+    const docs = await seedProject({
+      name: "Docs",
+      settings: { timezone: "UTC", weekly_email: false },
+    });
+    await sendPageViews(shop.token, ["ada"]);
+    await sendPageViews(docs.token, ["bo", "cy"]);
+    const sent: OutgoingMail[] = [];
+    const outcome = await sendWeeklyEmails(
+      env,
+      { ...realDeps(), now: () => MONDAY },
+      {
+        recipients: ["owner@example.com", "partner@example.com"],
+        origin: ORIGIN,
+        send: async (mail) => {
+          sent.push(mail);
+          return ok("message-id");
+        },
+      },
+    );
+    expect(outcome.ok).toBe(true);
+    // Products seeded by earlier tests in this file may be in the emails too,
+    // so each check names this test's products by their links.
+    const to = (address: string) => sent.find((mail) => mail.to === address)?.text ?? "";
+    expect(to("owner@example.com")).toContain(`${ORIGIN}/p/${shop.id}`);
+    expect(to("partner@example.com")).not.toContain(`${ORIGIN}/p/${shop.id}`);
+    for (const mail of sent) expect(mail.text).not.toContain(`${ORIGIN}/p/${docs.id}`);
+  });
+
   it("alerts-07 · with no alert address nothing is sent, and the outcome says so", async () => {
     const sent: OutgoingMail[] = [];
     const outcome = await sendWeeklyEmails(

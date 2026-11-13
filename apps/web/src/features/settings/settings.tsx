@@ -15,6 +15,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Card, PageBody, PageHeader } from "@/components/page.tsx";
 import { ErrorState, SkeletonRows } from "@/components/states.tsx";
+import { Badge } from "@/components/ui/badge.tsx";
 import { Button, buttonVariants } from "@/components/ui/button.tsx";
 import {
   Dialog,
@@ -305,6 +306,12 @@ function SettingsForm({ project }: { project: ProjectInfo }) {
         >
           <Rules rules={draft.internal_rules} onChange={(rules) => set("internal_rules", rules)} />
         </Section>
+        <Emails
+          weekly={draft.weekly_email}
+          off={draft.email_off}
+          onWeekly={(on) => set("weekly_email", on)}
+          onOff={(off) => set("email_off", off)}
+        />
         <Keys projectId={project.id} />
         <Privacy projectId={project.id} />
         <DeleteProduct project={project} />
@@ -753,5 +760,164 @@ function DeleteProduct({ project }: { project: ProjectInfo }) {
         </DialogContent>
       </Dialog>
     </Card>
+  );
+}
+
+interface AddressRow {
+  address: string;
+  confirmed: boolean;
+  fromSetup: boolean;
+}
+
+/** Sends the week's email now (alerts-08), and says how many it reached. */
+async function sendNow() {
+  try {
+    const sent = await api<{ sent: number }>("/api/emails/weekly", { method: "POST" });
+    toast(sent.sent === 1 ? "Sent to 1 address" : `Sent to ${String(sent.sent)} addresses`);
+  } catch (error) {
+    toast.error(error instanceof Error ? error.message : "The email could not be sent.");
+  }
+}
+
+/**
+ * The weekly email (alerts-09 to alerts-12, D-40): whether this product is in
+ * it, which addresses get it, adding and removing addresses, and sending it now.
+ * The switches are part of the page's draft and saved with the rest.
+ */
+function Emails({
+  weekly,
+  off,
+  onWeekly,
+  onOff,
+}: {
+  weekly: boolean;
+  off: string[];
+  onWeekly: (on: boolean) => void;
+  onOff: (off: string[]) => void;
+}) {
+  const client = useQueryClient();
+  const addresses = useQuery({
+    queryKey: ["email-addresses"],
+    queryFn: () => api<{ addresses: AddressRow[]; canAdd: boolean }>("/api/emails/addresses"),
+  });
+  const [typed, setTyped] = useState("");
+  const [busy, setBusy] = useState(false);
+  const refresh = () => void client.invalidateQueries({ queryKey: ["email-addresses"] });
+  const add = async () => {
+    setBusy(true);
+    try {
+      await api("/api/emails/addresses", { method: "POST", body: { address: typed.trim() } });
+      toast(`Cloudflare emailed ${typed.trim()} a link to confirm`);
+      setTyped("");
+      refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "The address could not be added.");
+    } finally {
+      setBusy(false);
+    }
+  };
+  const remove = async (address: string) => {
+    try {
+      await apiDone(`/api/emails/addresses/${encodeURIComponent(address)}`, { method: "DELETE" });
+      // Only a removed address that was switched off touches the unsaved draft.
+      if (off.includes(address)) onOff(off.filter((each) => each !== address));
+      refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "The address could not be removed.");
+    }
+  };
+  return (
+    <Section
+      title="Emails"
+      description="A summary every Monday of this product and your others. A new address gets a link from Cloudflare to confirm before any email reaches it."
+    >
+      <SwitchField
+        id="weekly-email"
+        label="Weekly email"
+        hint="Mondays at 06:00 UTC: visitors, top pages and sources, and problems, against the week before."
+        checked={weekly}
+        onChange={onWeekly}
+      />
+      <div className="flex flex-col gap-3">
+        <span className="font-medium text-[13px]">Send to</span>
+        {addresses.isError ? (
+          <ErrorState error={addresses.error} onRetry={() => void addresses.refetch()} />
+        ) : addresses.data === undefined ? (
+          <SkeletonRows rows={2} className="p-0" />
+        ) : (
+          addresses.data.addresses.map(({ address, confirmed, fromSetup }) => (
+            <div key={address} className="flex items-center justify-between gap-4">
+              <div className="flex min-w-0 items-center gap-2">
+                <Label htmlFor={`to-${address}`} className="truncate text-[13px] text-foreground">
+                  {address}
+                </Label>
+                <Badge variant={confirmed ? "success" : "warning"}>
+                  {confirmed ? "Confirmed" : "Waiting for confirmation"}
+                </Badge>
+                {fromSetup ? (
+                  <span className="text-muted-foreground text-xs">from the setup</span>
+                ) : null}
+              </div>
+              <div className="flex items-center gap-2">
+                {fromSetup ? (
+                  <span className="size-7" />
+                ) : (
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    aria-label={`Remove ${address}`}
+                    onClick={() => void remove(address)}
+                  >
+                    <Trash2 />
+                  </Button>
+                )}
+                <Switch
+                  id={`to-${address}`}
+                  disabled={!weekly}
+                  checked={weekly && !off.includes(address)}
+                  onCheckedChange={(on) =>
+                    onOff(on ? off.filter((each) => each !== address) : [...off, address])
+                  }
+                />
+              </div>
+            </div>
+          ))
+        )}
+        {addresses.data?.canAdd === false ? (
+          <p className="text-muted-foreground text-xs">
+            Adding addresses needs a one-time setup step in Cloudflare. Ask your agent to set it up.
+          </p>
+        ) : addresses.data === undefined ? null : (
+          <form
+            className="flex items-center gap-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void add();
+            }}
+          >
+            <Input
+              type="email"
+              aria-label="Email address"
+              placeholder="name@example.com"
+              className="w-72"
+              value={typed}
+              onChange={(event) => setTyped(event.target.value)}
+            />
+            <Button type="submit" size="sm" disabled={typed.trim() === "" || busy}>
+              <Plus />
+              Add
+            </Button>
+          </form>
+        )}
+      </div>
+      <div className="flex items-center gap-3">
+        <Button size="sm" onClick={() => void sendNow()}>
+          Send this week's email now
+        </Button>
+        <span className="text-muted-foreground text-xs">
+          One email covering all your products, to every confirmed address that is on.
+        </span>
+      </div>
+    </Section>
   );
 }

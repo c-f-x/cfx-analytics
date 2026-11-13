@@ -129,9 +129,13 @@ test("the worker's config is the template's, with production built from the site
     durable_objects: TEMPLATE.durable_objects,
     migrations: TEMPLATE.migrations,
     r2_buckets: [{ binding: "RECORDINGS", bucket_name: "analytics-recordings" }],
-    send_email: [{ name: "MAIL", allowed_destination_addresses: ["owner@example.com"] }],
+    send_email: [{ name: "MAIL" }],
     triggers: TEMPLATE.triggers,
-    vars: { MAIL_FROM: "alerts@example.com", ALERT_ADDRESSES: '["owner@example.com"]' },
+    vars: {
+      MAIL_FROM: "alerts@example.com",
+      ALERT_ADDRESSES: '["owner@example.com"]',
+      CLOUDFLARE_ACCOUNT_ID: "0".repeat(32),
+    },
     assets: { directory: "/repo/apps/worker/assets", binding: "ASSETS", run_worker_first: true },
   });
   // The template itself is left as it was.
@@ -215,13 +219,12 @@ test("the site file is named after the tool, as the family's conventions say", (
   assert.equal(root.name, "cfx-analytics");
 });
 
-test("alerts-07 · production's mail binding may send only to the site file's alert addresses", () => {
+test("alerts-07 · production knows the alert addresses and the account whose confirmed addresses it may add", () => {
   const read = siteOf({ ...SITE, alert_addresses: ["owner@example.com", "partner@example.com"] });
   assert.ok(read.ok);
   const production = joinWorker(TEMPLATE, read.value, "/repo/apps/worker").env.production;
-  assert.deepEqual(production.send_email, [
-    { name: "MAIL", allowed_destination_addresses: ["owner@example.com", "partner@example.com"] },
-  ]);
+  assert.deepEqual(production.send_email, [{ name: "MAIL" }]);
+  assert.equal(production.vars.CLOUDFLARE_ACCOUNT_ID, "0".repeat(32));
   assert.equal(production.vars.ALERT_ADDRESSES, '["owner@example.com","partner@example.com"]');
   assert.deepEqual(production.triggers, { crons: ["0 6 * * 1"] });
   const none = siteOf({ ...SITE, alert_addresses: [] });
