@@ -417,3 +417,13 @@ The owner added: "we have to change all reference in UI etc from cfanalytics to 
 
 **Consequences.** Merged work reaches production without waiting for the owner. A failed smoke test is the lead's to undo, with the undo line the plan printed.
 
+## D-37 · The player marks moments on its timeline and names events in plain words · accepted (2026-11-13)
+
+**Made by.** The owner, approving both parts ("1. ok 2. ok") and then the mockup of the real player ("looks good"), #22.
+
+**Context.** The player's list showed raw event names (`$autocapture`), said nothing about what was clicked, did not follow playback, and read at most 200 events.
+
+**Decision.** Each page view and click is a mark on the timeline. Rage clicks and clicks that did nothing use the warning colour, which is kept for function. The list names each event in plain words by the rules of recordings-37, highlights the row of the moment playing, and keeps it in view. It reads every event of the session up to 2,000 (recordings-38). One pure function, `labelOf` in `apps/web/src/lib/replay.ts`, names events for both.
+
+**Consequences.** The frustration ranking (#26) and the person's page (#30) reuse `labelOf`. A typed value never reaches a label.
+
